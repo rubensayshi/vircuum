@@ -1,14 +1,14 @@
 #! /usr/bin/env python
 from collections import namedtuple
 import time
-# from vircuum.tradeapi.cexio import TradeAPI
-from vircuum.tradeapi.dummy import TradeAPI
+from vircuum.tradeapi.cexio import TradeAPI
+# from vircuum.tradeapi.dummy import TradeAPI
 
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
-THRESHOLD = 0.05
-USE_BALANCE = 0.1
-STEPS = 10
+THRESHOLD = 0.01
+USE_BALANCE = 1
+STEPS = 5
 
 tradeapi = TradeAPI(api_key="UwqnvISKJGhs285xubyS6f6f6rc", api_secret="mOSZ3kHeTzYoZLfXMw89Tk9KOtE", username="rubensayshi")
 

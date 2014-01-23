@@ -9,7 +9,7 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
 THRESHOLD = 0.02
 USE_BALANCE = 1
-STEPS = 10
+STEPS = 5
 
 # tradeapi = TradeAPI(api_key="UwqnvISKJGhs285xubyS6f6f6rc", api_secret="mOSZ3kHeTzYoZLfXMw89Tk9KOtE", username="rubensayshi")
 tradeapi = TradeAPI(api_key="Z8XZA0DU-MY93LBM6-VK3USQMY-FQ1HAPG8-UD2Z02T8", 
@@ -20,7 +20,7 @@ history = []
 
 real_balance = float(tradeapi.balance())
 start_balance = USE_BALANCE * real_balance
-start_balance = 100
+start_balance = 100 # hack since I dont have a balance yet, let's 'play' with $100
 balance = start_balance
 spend_per_step = balance / STEPS
 profit = 0
