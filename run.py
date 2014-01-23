@@ -102,9 +102,9 @@ finally:
     print "orderslow  [%f]" % orderslow
     print "ordersmid  [%f]" % ordersmid
 
-    print "profithigh [%f] %f%%" % ((ordershigh + netprofit), (ordershigh + netprofit / start_balance) * 100))
-    print "profitlow  [%f] %f%%" % ((orderslow + netprofit), (orderslow + netprofit / start_balance) * 100))
-    print "profitmid  [%f] %f%%" % ((ordersmid + netprofit), (ordersmid + netprofit / start_balance) * 100))
+    print "profithigh [%f] %f%%" % ((ordershigh + netprofit), ((ordershigh + netprofit) / start_balance) * 100)
+    print "profitlow  [%f] %f%%" % ((orderslow + netprofit), ((orderslow + netprofit) / start_balance) * 100)
+    print "profitmid  [%f] %f%%" % ((ordersmid + netprofit), ((ordersmid + netprofit) / start_balance) * 100)
 
 
 
