@@ -28,7 +28,7 @@ class TradeAPI(object):
         data = simple_request_url("https://cex.io/api/balance/", data=urllib.urlencode(args))
         data = json.loads(data)
 
-        return data
+        return float(data['BTC']['available'])
 
     def auth_args(self):
         nonce = str(int(time.time()))

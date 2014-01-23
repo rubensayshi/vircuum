@@ -5,7 +5,7 @@ class TradeAPI(object):
     TIME_PER_LOOP = 1
 
     def __init__(self, *args, **kwargs):
-        self.prev_last = 0.04397979
+        self.prev_last = 500
         self.dummy_loop = 0
         self.dummy_loop_dir = 0
 
@@ -14,15 +14,7 @@ class TradeAPI(object):
         return (self.dummy_last(), )
 
     def balance(self):
-        return {
-            "timestamp":"1390488450",
-            "username":"dummy",
-            "BTC":{"available":"0.01771481","orders":"0.00000000"},
-            "GHS":{"available":"4.00000045","orders":"0.00000000"},
-            "IXC":{"available":"0.06230489"},
-            "NMC":{"available":"0.01640417"},
-            "DVC":{"available":"2.30852858"}
-        }
+        return 100.0
 
     def dummy_last(self):
 
@@ -31,11 +23,11 @@ class TradeAPI(object):
                 dir = self.dummy_loop_dir
 
             if dir == 0:
-                self.prev_last += float(random.randint(-50, 50)) * 0.00001
+                self.prev_last += float(random.randint(-50, 50)) * 1
             elif dir > 0:
-                self.prev_last += float(random.randint(0, 100)) * 0.00001
+                self.prev_last += float(random.randint(0, 100)) * 1
             elif dir < 0:
-                self.prev_last += float(random.randint(-100, 0)) * 0.00001
+                self.prev_last += float(random.randint(-100, 0)) * 1
 
             return self.prev_last
 
