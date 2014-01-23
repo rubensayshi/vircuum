@@ -27,7 +27,7 @@ PartialCookie = partial(cookielib.Cookie, version=0,
                                           rfc2109=False)
 
 
-def simple_request_url(url, data = None, timeout = None, return_response_object = False, head = False, cookiejar = None, useragent = None):
+def simple_request_url(url, data = None, timeout = None, return_response_object = False, headers = None, head = False, cookiejar = None, useragent = None):
     # urllib2 won't escape spaces and without doing this here some requests will fail
     url     = url.replace(' ', '%20')
     host    = None
@@ -39,6 +39,10 @@ def simple_request_url(url, data = None, timeout = None, return_response_object 
 
     if host:
         request.add_header('Host', host)
+
+    if headers:
+        for k, v in headers.iteritems():
+            request.add_header(k, v)
 
     handlers = []
     if cookiejar:
