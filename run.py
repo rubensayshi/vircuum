@@ -10,7 +10,8 @@ parser.add_argument("-u", "--use_balance", dest="use_balance", type=float, requi
 parser.add_argument("-s", "--steps", dest="steps", type=float, required=True, help="split balance into amount of 'steps'")
 
 args = parser.parse_args()
-print args
+
+extra = {}
 
 if args.exchange == 'cexio':
     from vircuum.tradeapi.cexio import TradeAPI
@@ -22,6 +23,7 @@ elif args.exchange == 'btce':
     from vircuum.tradeapi.btce import TradeAPI
     tradeapi = TradeAPI(api_key="Z8XZA0DU-MY93LBM6-VK3USQMY-FQ1HAPG8-UD2Z02T8",
                         api_secret="6fadd680afbe3c607571ae0385fd8be446d5bbff05d066aa40ebd1019acbaf61")
+    extra.update(dict(balance = 100))
 
 elif args.exchange == 'dummy':
     from vircuum.tradeapi.dummy import TradeAPI
@@ -31,6 +33,6 @@ else:
     raise Exception("Unknown exchange [%s]" % args.exchange)
 
 # trader
-trader = Trader(tradeapi = tradeapi, threshold = args.threshold, use_balance = args.use_balance, steps = args.steps)
+trader = Trader(tradeapi = tradeapi, threshold = args.threshold, use_balance = args.use_balance, steps = args.steps, **extra)
 
 trader.run()

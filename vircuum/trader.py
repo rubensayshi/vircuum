@@ -4,7 +4,7 @@ import time
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
 class Trader(object):
-    def __init__(self, tradeapi, threshold, use_balance, steps):
+    def __init__(self, tradeapi, threshold, use_balance, steps, balance):
         self.tradeapi = tradeapi
         self.threshold = threshold
         self.use_balance = use_balance
@@ -14,7 +14,11 @@ class Trader(object):
         self.orders = []
         self.history = []
 
-        self.real_balance = self.tradeapi.balance()
+        if not balance:
+            self.real_balance = self.tradeapi.balance()
+        else:
+            self.real_balance = balance
+
         self.start_balance = self.use_balance * self.real_balance
         self.maxbalance = self.balance = self.start_balance
         self.spend_per_step = self.balance / steps
