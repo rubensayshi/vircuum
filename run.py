@@ -10,6 +10,7 @@ parser.add_argument("-e", "--exchange", dest="exchange", type=str, required=True
 parser.add_argument("-t", "--threshold", dest="threshold", type=float, required=True, help="%% change required to act (0.01 = 1%%)")
 parser.add_argument("-u", "--use_balance", dest="use_balance", type=float, required=True, help="amount of balance to use, (1.0 = 100%%)")
 parser.add_argument("-s", "--steps", dest="steps", type=float, required=True, help="split balance into amount of 'steps'")
+parser.add_argument("-y", "--autoconfirm", dest="autoconfirm", action="store_false", default=False, required=False, help="no longer require confirmation to place orders")
 
 args = parser.parse_args()
 
@@ -35,6 +36,6 @@ else:
     raise Exception("Unknown exchange [%s]" % args.exchange)
 
 # trader
-trader = Trader(tradeapi = tradeapi, threshold = args.threshold, use_balance = args.use_balance, steps = args.steps, **extra)
+trader = Trader(tradeapi = tradeapi, threshold = args.threshold, use_balance = args.use_balance, steps = args.steps, autoconfirm = args.autoconfirm, **extra)
 
 trader.run()

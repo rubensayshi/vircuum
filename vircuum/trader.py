@@ -4,11 +4,12 @@ import time
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
 class Trader(object):
-    def __init__(self, tradeapi, threshold, use_balance, steps, balance = None):
+    def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, balance = None):
         self.tradeapi = tradeapi
         self.threshold = threshold
         self.use_balance = use_balance
         self.steps = steps
+        self.autoconfirm = autoconfirm
 
         self.price = 0
         self.buy_orders = []
@@ -65,6 +66,32 @@ class Trader(object):
             raise
             return
 
+    def confirm(self):
+        if self.autoconfirm:
+            return True
+        
+        while not self.do_confirm():
+            pass
+
+    def do_confirm(self):
+        while True:
+            confirmedstr = str(raw_input("ok [y/N]? \n"))
+
+            confirmed = confirmedstr
+            if "#" in confirmed:
+                confirmed = confirmed[:confirmed.index("#")]
+            confirmed = confirmed.strip().lower()
+            try:
+                if confirmed == "y":
+                    return True
+                elif confirmed == "n":
+                    return False
+            except:
+                pass
+
+            continue
+
+
     def place_buy_orders(self):
         price = self.price
 
@@ -73,6 +100,8 @@ class Trader(object):
             amount = self.spend_per_step / price 
             
             print "placing BUY order for [%f] @ [%f]" % (amount, price)
+            self.confirm()
+
             buy_order = self.retry(lambda: self.tradeapi.place_order(type = 'buy', price = price, amount = amount))
             print "placed BUY order %s" % buy_order
 
@@ -96,6 +125,8 @@ class Trader(object):
             price = bought_order.price * (1 + self.threshold)
 
             print "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
+            self.confirm()
+
             sell_order = self.retry(lambda: self.tradeapi.place_order(type = 'sell', price = price, amount = bought_order.amount))
             print "placed SELL order %s" % sell_order
 

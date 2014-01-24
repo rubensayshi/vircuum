@@ -24,7 +24,7 @@ class TradeAPI(object):
         self.price = 500
         self.dummy_loop = 0
         self.dummy_loop_dir = 0
-        self._balance = 500
+        self._balance = 250
         self.orders = []
 
     def ticker(self):
@@ -98,7 +98,7 @@ class TradeAPI(object):
                 last = laststr
                 if "#" in last:
                     last = last[:last.index("#")]
-                # last = last.trim()
+                last = last.strip()
 
                 print "%s -> %s" % (laststr, last)
                 try:
