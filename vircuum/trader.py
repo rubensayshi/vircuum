@@ -41,7 +41,6 @@ class Trader(object):
                 self.loop()
                 self.maxbalance = max(self.balance, self.maxbalance)
                 sleep(t)
-                yield
         finally:
             self.finish()
 
