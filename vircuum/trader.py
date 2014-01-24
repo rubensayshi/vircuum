@@ -117,7 +117,7 @@ class Trader(object):
             ordersdump.append("%f  |  %f  " % (order.price, order.amount))
 
             orderslow  += order.amount * self.price
-            ordershigh += order.amount * order.price * (1 + THRESHOLD)
+            ordershigh += order.amount * order.price * (1 + self.threshold)
             ordersmid  += order.amount * order.price
 
         print "ordershigh [%f]" % ordershigh
