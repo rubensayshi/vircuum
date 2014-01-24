@@ -11,7 +11,10 @@ class Trader(object):
         self.steps = steps
 
         self.price = 0
-        self.orders = []
+        self.buy_orders = []
+        self.bought_orders = []
+        self.sell_orders = []
+        self.sold_orders = []
         self.history = []
 
         if not balance:
@@ -22,7 +25,8 @@ class Trader(object):
         self.start_balance = self.use_balance * self.real_balance
         self.maxbalance = self.balance = self.start_balance
         self.spend_per_step = self.balance / steps
-        self.profit = 0
+        self.product = 0.0
+        self.profit = 0.0
 
     def run(self):
         print "balance [%f], using [%f], perstep [%f]" % (self.real_balance, self.balance, self.spend_per_step)
@@ -42,67 +46,100 @@ class Trader(object):
                 self.maxbalance = max(self.balance, self.maxbalance)
                 sleep(t)
         finally:
+            self.cancel_buy_orders()
             self.finish()
 
-    def loop(self):
-            for retry in range(3):
-                try:
-                    (self.price, ) = self.tradeapi.ticker()
-                    break
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    pass
+    def get_price(self):
+        (price, ) = self.retry(lambda: self.tradeapi.ticker())
+        return price
+
+    def retry(self, fn, tries = 3):
+        for retry in range(3):
+            try:
+                return fn()
+            except KeyboardInterrupt:
+                raise
+            except:
+                pass
+        else:
+            raise
+            return
+
+    def place_buy_orders(self):
+        price = self.price
+
+        while self.balance >= self.spend_per_step:
+            price  = price * (1 - self.threshold)
+            amount = self.spend_per_step / price 
+            
+            print "placing BUY order for [%f] @ [%f]" % (amount, price)
+            buy_order = self.retry(lambda: self.tradeapi.place_order(type = 'buy', price = price, amount = amount))
+            print "placed BUY order %s" % buy_order
+
+            self.buy_orders.append(buy_order)
+
+            self.balance -= self.spend_per_step
+
+    def check_current_buy_orders(self, open_orders):
+        for buy_order in list(self.buy_orders):
+            if buy_order.id in [open_order.id for open_order in open_orders]:
+                # not processed yet :-()
+                continue
             else:
-                return
+                # processed! \o/
+                print "order BOUGHT %s" % buy_order
+                self.bought_orders.append(buy_order)
+                self.buy_orders.remove(buy_order)
 
-            print "price [%f]" % self.price
-            print "balance [%f]" % self.balance
+    def place_sell_orders(self):
+        for bought_order in list(self.bought_orders):
+            price = bought_order.price * (1 + self.threshold)
 
-            for order in sorted(self.orders, key = lambda order: order.price, reverse = True):
-                print "%f  |  %f  " % (order.price, order.amount)
+            print "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
+            sell_order = self.retry(lambda: self.tradeapi.place_order(type = 'sell', price = price, amount = bought_order.amount))
+            print "placed SELL order %s" % sell_order
 
-            # track price
-            self.history.append(self.price)
+            self.sell_orders.append(sell_order)
+            self.bought_orders.remove(bought_order)
 
-            # check if we want to buy
+    def check_current_sell_orders(self, open_orders):
+        for sell_order in list(self.sell_orders):
+            if sell_order.id in [open_order.id for open_order in open_orders]:
+                # not processed yet :-()
+                continue
+            else:
+                # processed! \o/
+                print "order SOLD %s" % sell_order
+                self.sold_orders.append(sell_order)
+                self.sell_orders.remove(sell_order)
 
-            # highest price we've measured
-            roof = max(self.history)
+                self.balance += sell_order.price * sell_order.amount
 
-            # we don't want to buy above our own orders that still need to sell
-            ordersdesc = sorted(self.orders, key = lambda order: order.price, reverse = True)
-            if len(ordersdesc) > 0:
-                roof = min(roof, ordersdesc[-1].price)
+    def cancel_buy_orders(self):
+        for buy_order in list(self.buy_orders):
 
-            diff = (self.price - roof)
-            diffperc = diff / self.price
+            print "canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price)
+            canceled = self.retry(lambda: self.tradeapi.cancel_order(id = buy_order.id))
+            print "canceled BUY order %s" % buy_order
 
-            print "price roof[%f] -> price[%f] = %f (%f%%)" % (roof, self.price, diff, diffperc * 100)
+            self.buy_orders.remove(buy_order)
+            self.balance += buy_order.amount * buy_order.price
 
-            # if the price dropped more than our THRESHOLD
-            if (diffperc * -1) >= self.threshold:
-                print "goodtobuy! "
+    def loop(self):
+            self.price = self.get_price()
+            open_orders = self.tradeapi.open_orders()
 
-                if not self.balance > self.spend_per_step:
-                    print "not enough balance to buy"
-                else:
-                    print "buying!"
-                    self.orders.append(Order(self.price, self.spend_per_step / self.price, self.spend_per_step, {}))
-                    self.balance -= self.spend_per_step
+            self.check_current_buy_orders(open_orders)
+            self.place_sell_orders()
+            self.check_current_sell_orders(open_orders)
 
-            # check if we want to sell
-            for order in self.orders:
-                diff = (self.price - order.price)
-                diffperc = diff / order.price
-                # if the price went up by at least our THRESHOLD
-                if diffperc >= self.threshold:
-                    if order.amount != 0.0:
-                        print "selling! [%f] -> [%f] = %f (%f%%)" % (order.price, self.price, diff, diffperc * 100)
-                    self.orders.remove(order)
-                    self.balance += self.price * order.amount
+            if len(self.buy_orders) == 0:
+                self.place_buy_orders()
 
     def finish(self):
+        print "\n" *2
+        print "----------------------------------------"
+
         netprofit = self.balance - self.start_balance
         print "start [%f]" % self.start_balance
         print "end   [%f]" % self.balance
@@ -113,19 +150,31 @@ class Trader(object):
         orderslow  = 0
         ordershigh = 0
         ordersmid  = 0
-        for order in sorted(self.orders, key = lambda order: order.price, reverse = True):
-            ordersdump.append("%f  |  %f  " % (order.price, order.amount))
 
-            orderslow  += order.amount * self.price
-            ordershigh += order.amount * order.price * (1 + self.threshold)
-            ordersmid  += order.amount * order.price
+        print "----------------------------------------"
+        print "sell orders left:"
 
-        print "ordershigh [%f]" % ordershigh
-        print "orderslow  [%f]" % orderslow
-        print "ordersmid  [%f]" % ordersmid
+        if len(self.sell_orders) == 0:
+            print "NONE"
+        else:
 
-        print "profithigh [%f] %f%%" % ((ordershigh + netprofit), ((ordershigh + netprofit) / self.start_balance) * 100)
-        print "profitlow  [%f] %f%%" % ((orderslow + netprofit), ((orderslow + netprofit) / self.start_balance) * 100)
-        print "profitmid  [%f] %f%%" % ((ordersmid + netprofit), ((ordersmid + netprofit) / self.start_balance) * 100)
+            for sell_order in sorted(self.sell_orders, key = lambda sell_order: sell_order.price, reverse = True):
+                ordersdump.append(str(sell_order))
 
-        print "\n".join(ordersdump)
+                orderslow  += sell_order.amount * self.price
+                ordershigh += sell_order.amount * sell_order.price * (1 + self.threshold)
+                ordersmid  += sell_order.amount * sell_order.price
+            
+            print "\n".join(ordersdump)
+            print "----------------------------------------"
+
+            print "ordershigh [%f] (sell left overs against their intended price)" % ordershigh
+            print "orderslow  [%f] (sell left overs against current price)" % orderslow
+            print "ordersmid  [%f] (sell left overs against their bought price)" % ordersmid
+
+            print "profithigh [%f] %f%%" % ((ordershigh + netprofit), ((ordershigh + netprofit) / self.start_balance) * 100)
+            print "profitlow  [%f] %f%%" % ((orderslow + netprofit), ((orderslow + netprofit) / self.start_balance) * 100)
+            print "profitmid  [%f] %f%%" % ((ordersmid + netprofit), ((ordersmid + netprofit) / self.start_balance) * 100)
+
+        print "----------------------------------------"
+        print "\n" *2
