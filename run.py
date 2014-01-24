@@ -2,6 +2,7 @@
 
 from vircuum.trader import Trader
 import argparse
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exchange", dest="exchange", type=str, required=True, help="cexio, btce, dummy")
@@ -35,4 +36,5 @@ else:
 # trader
 trader = Trader(tradeapi = tradeapi, threshold = args.threshold, use_balance = args.use_balance, steps = args.steps, **extra)
 
-trader.run()
+for loop in trader.run():
+    sys.stdout.flush()
