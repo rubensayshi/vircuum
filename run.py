@@ -20,7 +20,8 @@ if args.exchange == 'cexio':
     from vircuum.tradeapi.cexio import TradeAPI
     tradeapi = TradeAPI(api_key="5kqjg6GJ8Omzby4LUbZXBsmOb68",
                         api_secret="QHec1J1fbWjlfaP6i4GB9ZiUs",
-                        username="rubensayshi2")
+                        username="rubensayshi2",
+                        debug=True)
 
 elif args.exchange == 'btce':
     from vircuum.tradeapi.btce import TradeAPI

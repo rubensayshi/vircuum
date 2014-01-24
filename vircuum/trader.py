@@ -31,6 +31,10 @@ class Trader(object):
 
     def run(self):
         print "balance [%f], using [%f], perstep [%f]" % (self.real_balance, self.balance, self.spend_per_step)
+        print "profit margin: [%f] = [%f%%]" % (self.threshold, self.threshold * 100)
+
+        print "run?"
+        self.confirm()
 
         def sleep(t):
             tt = time.time() - t
@@ -66,10 +70,10 @@ class Trader(object):
             raise
             return
 
-    def confirm(self):
-        if self.autoconfirm:
+    def confirm(self, allow_autoconfirm = False):
+        if self.autoconfirm and allow_autoconfirm:
             return True
-        
+
         while not self.do_confirm():
             pass
 
@@ -96,18 +100,18 @@ class Trader(object):
         price = self.price
 
         while self.balance >= self.spend_per_step:
-            price  = price * (1 - self.threshold)
+            price  = float("{:13.10f}".format(price * (1 - self.threshold)))
             amount = self.spend_per_step / price 
             
             print "placing BUY order for [%f] @ [%f]" % (amount, price)
-            self.confirm()
+            self.confirm(allow_autoconfirm = True)
 
             buy_order = self.retry(lambda: self.tradeapi.place_order(type = 'buy', price = price, amount = amount))
             print "placed BUY order %s" % buy_order
 
             self.buy_orders.append(buy_order)
 
-            self.balance -= self.spend_per_step
+            self.balance -= (price * amount)
 
     def check_current_buy_orders(self, open_orders):
         for buy_order in list(self.buy_orders):
@@ -122,10 +126,10 @@ class Trader(object):
 
     def place_sell_orders(self):
         for bought_order in list(self.bought_orders):
-            price = bought_order.price * (1 + self.threshold)
+            price = float("{:13.10f}".format(bought_order.price * (1 + self.threshold)))
 
             print "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
-            self.confirm()
+            self.confirm(allow_autoconfirm = True)
 
             sell_order = self.retry(lambda: self.tradeapi.place_order(type = 'sell', price = price, amount = bought_order.amount))
             print "placed SELL order %s" % sell_order
@@ -207,5 +211,9 @@ class Trader(object):
             print "profitlow  [%f] %f%%" % ((orderslow + netprofit), ((orderslow + netprofit) / self.start_balance) * 100)
             print "profitmid  [%f] %f%%" % ((ordersmid + netprofit), ((ordersmid + netprofit) / self.start_balance) * 100)
 
+        print "----------------------------------------"
+        print "\n" *2
+
+        print "CANCEL YOUR BUY OTHERS MANUALLY !!!"
         print "----------------------------------------"
         print "\n" *2

@@ -22,10 +22,12 @@ class Order(object):
 class TradeAPI(object):
     TIME_PER_LOOP = 90
 
-    def __init__(self, api_key, api_secret, username):
+    def __init__(self, api_key, api_secret, username, debug = False):
         self.api_key = api_key
         self.api_secret = api_secret
         self.username = username
+        self.debug = debug
+        self.prev_nonce = None
 
     def ticker(self):
         data = simple_request_url("https://cex.io/api/ticker/GHS/BTC")
@@ -36,6 +38,7 @@ class TradeAPI(object):
     def balance(self):
         args = self.auth_args()
         data = simple_request_url("https://cex.io/api/balance/", data=urllib.urlencode(args))
+        if self.debug: print data
         data = json.loads(data)
 
         return float(data['BTC']['available'])
@@ -43,27 +46,36 @@ class TradeAPI(object):
     def open_orders(self):
         args = self.auth_args()
         data = simple_request_url("https://cex.io/api/open_orders/GHS/BTC", data=urllib.urlencode(args))
+        if self.debug: print data
         data = json.loads(data)
 
         return [Order(row['id'], row['time'], row['type'], row['price'], row['amount'], row['pending']) for row in data]
 
     def place_order(self, type, amount, price):
-        args = self.auth_args()
-        args.update(dict(type = type, amount = amount, price = price))
+        args = dict(type = type, amount = amount, price = price)
+        if self.debug: print "place_order", args
+        args.update(self.auth_args())
         data = simple_request_url("https://cex.io/api/place_order/GHS/BTC", data=urllib.urlencode(args))
+        if self.debug: print data
         data = json.loads(data)
 
-        return Order(row['id'], row['time'], row['type'], row['price'], row['amount'], row['pending'])
+        return Order(data['id'], data['time'], data['type'], data['price'], data['amount'], data['pending'])
 
     def cancel_order(self, id):
-        args = self.auth_args()
-        args.update(dict(id = id))
+        args = dict(id = id)
+        if self.debug: print "cancel_order", args
+        args.update(self.auth_args())
         data = simple_request_url("https://cex.io/api/cancel_order", data=urllib.urlencode(args))
-        
+        if self.debug: print data
+
         return len(data) > 0
 
     def auth_args(self):
-        nonce = str(int(time.time()))
+        nonce = self.prev_nonce
+        while nonce == self.prev_nonce:
+            nonce = str(int(time.time()))
+        self.prev_nonce = nonce
+
         message = nonce + self.username + self.api_key
         signature = hmac.new(self.api_secret, msg=message, digestmod=hashlib.sha256).hexdigest().upper()
 
