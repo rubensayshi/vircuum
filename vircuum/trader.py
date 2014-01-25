@@ -11,7 +11,8 @@ class Trader(object):
         self.steps = steps
         self.autoconfirm = autoconfirm
 
-        self.price = 0
+        self.bid = 0
+        self.ask = 0
         self.buy_orders = []
         self.bought_orders = []
         self.sell_orders = []
@@ -36,11 +37,10 @@ class Trader(object):
         print "run?"
         self.confirm()
 
-        def sleep(t):
+        def endofloop(t):
             tt = time.time() - t
-            sleeping = self.tradeapi.TIME_PER_LOOP - tt
-
-            print "loop took [%d], sleeping [%d] ..." % (tt, sleeping)
+            sleeping = 5 - tt
+            print "loop took [%d], sleeping[%f]" % (tt, sleeping)
             if sleeping > 0:
                 time.sleep(sleeping)
 
@@ -49,14 +49,14 @@ class Trader(object):
                 t = time.time()
                 self.loop()
                 self.maxbalance = max(self.balance, self.maxbalance)
-                sleep(t)
+                endofloop(t)
         finally:
             self.cancel_buy_orders()
             self.finish()
 
     def get_price(self):
-        (price, ) = self.retry(lambda: self.tradeapi.ticker())
-        return price
+        (bid, ask, ) = self.retry(lambda: self.tradeapi.ticker())
+        return (bid, ask, )
 
     def retry(self, fn, tries = 3):
         for retry in range(3):
@@ -95,12 +95,11 @@ class Trader(object):
 
             continue
 
-
     def place_buy_orders(self):
-        price = self.price
+        price = self.ask
 
         while self.balance >= self.spend_per_step:
-            price  = float("{:13.10f}".format(price * (1 - self.threshold)))
+            price  = float("{:3.8f}".format(price * (1 - self.threshold)))
             amount = self.spend_per_step / price 
             
             print "placing BUY order for [%f] @ [%f]" % (amount, price)
@@ -126,7 +125,7 @@ class Trader(object):
 
     def place_sell_orders(self):
         for bought_order in list(self.bought_orders):
-            price = float("{:13.10f}".format(bought_order.price * (1 + self.threshold)))
+            price = float("{:3.8f}".format(bought_order.price * (1 + self.threshold)))
 
             print "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
             self.confirm(allow_autoconfirm = True)
@@ -161,7 +160,11 @@ class Trader(object):
             self.balance += buy_order.amount * buy_order.price
 
     def loop(self):
-            self.price = self.get_price()
+            (self.bid, self.ask) = self.get_price()
+
+            print "bid: %f" % self.bid
+            print "sell: %f" % self.ask
+
             open_orders = self.tradeapi.open_orders()
 
             self.check_current_buy_orders(open_orders)
@@ -196,7 +199,7 @@ class Trader(object):
             for sell_order in sorted(self.sell_orders, key = lambda sell_order: sell_order.price, reverse = True):
                 ordersdump.append(str(sell_order))
 
-                orderslow  += sell_order.amount * self.price
+                orderslow  += sell_order.amount * self.bid
                 ordershigh += sell_order.amount * sell_order.price * (1 + self.threshold)
                 ordersmid  += sell_order.amount * sell_order.price
             
@@ -214,6 +217,6 @@ class Trader(object):
         print "----------------------------------------"
         print "\n" *2
 
-        print "CANCEL YOUR BUY OTHERS MANUALLY !!!"
+        print "CHECK IF ALL YOUR BUY ORDERS WERE PROPERLY CANCELED !!!"
         print "----------------------------------------"
         print "\n" *2

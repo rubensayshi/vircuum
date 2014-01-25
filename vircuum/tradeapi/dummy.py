@@ -28,7 +28,8 @@ class TradeAPI(object):
         self.orders = []
 
     def ticker(self):
-        return (self.dummy_price(), )
+        self.dummy_price()
+        return (self.price, self.price, )
 
     def balance(self):
         return self._balance
