@@ -165,7 +165,7 @@ class Trader(object):
             print "bid: %f" % self.bid
             print "sell: %f" % self.ask
 
-            open_orders = self.tradeapi.open_orders()
+            open_orders = self.retry(lambda: self.tradeapi.open_orders())
 
             self.check_current_buy_orders(open_orders)
             self.place_sell_orders()
