@@ -115,6 +115,7 @@ class Trader(object):
                 if sleeping > 0:
                     time.sleep(sleeping)
         finally:
+            print "FINALLY"
             self.cancel_buy_orders()
             self.finish()
 
