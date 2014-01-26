@@ -96,6 +96,9 @@ class Trader(object):
             continue
 
     def place_buy_orders(self):
+        if self.balance < self.spend_per_step:
+            return
+
         price = self.ask
 
         while self.balance >= self.spend_per_step:
@@ -125,7 +128,7 @@ class Trader(object):
 
     def place_sell_orders(self):
         for bought_order in list(self.bought_orders):
-            price = float("{:3.8f}".format(bought_order.price * (1 + self.threshold)))
+            price = float("{:3.8f}".format(bought_order.price / (1 - self.threshold)))
 
             print "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
             self.confirm(allow_autoconfirm = True)
@@ -171,8 +174,7 @@ class Trader(object):
             self.place_sell_orders()
             self.check_current_sell_orders(open_orders)
 
-            if len(self.buy_orders) == 0:
-                self.place_buy_orders()
+            self.place_buy_orders()
 
     def finish(self):
         print "\n" *2
