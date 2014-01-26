@@ -114,7 +114,10 @@ class Trader(object):
                 self.maxbalance = max(self.balance, self.maxbalance)
                 endmsg, sleeping = endofloop(t)
 
-                self.print_status(self.bid, self.ask, self.balance, datetime.now(), self.buy_orders, self.sell_orders, actionsbefore = self.debug_actions, actionsafter = [endmsg])
+                self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
+                                  dt = datetime.now(), 
+                                  buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
+                                  actionsbefore = self.debug_actions, actionsafter = [endmsg])
                 
                 if sleeping > 0:
                     time.sleep(sleeping)
@@ -123,8 +126,10 @@ class Trader(object):
 
             self.cancel_buy_orders()
 
-            self.print_status(self.bid, self.ask, self.balance, datetime.now(), self.buy_orders, self.sell_orders, actionsbefore = self.debug_actions, actionsafter = [])
-
+            self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
+                              dt = datetime.now(), 
+                              buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
+                              actionsbefore = self.debug_actions, actionsafter = [])
             self.finish()
 
 
