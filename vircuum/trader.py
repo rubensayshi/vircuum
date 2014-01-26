@@ -227,7 +227,8 @@ class Trader(object):
         # if our newest buy order has surpassed our threshold then we should reset
         if int(time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
             yield "resetting BUY orders!"
-            self.cancel_buy_orders()
+            for msg in self.cancel_buy_orders():
+                yield msg
             yield "reset BUY orders!"
 
     def print_status(self, bid, sell, buy_orders, sell_orders, actionsbefore, actionsafter):
@@ -239,7 +240,7 @@ class Trader(object):
             if (age > 3600 * 2):
                 age /= 3600
                 ageunit = "h"
-            elif (age > 00 * 10):
+            elif (age > 60 * 10):
                 age /= 60
                 ageunit = "m"
 
