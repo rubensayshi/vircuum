@@ -195,9 +195,10 @@ class Trader(object):
 
             self.balance -= (price * amount)
 
-    def check_current_buy_orders(self):
-        open_orders = self.retry(lambda: self.tradeapi.open_orders())
-        
+    def check_current_buy_orders(self, open_orders = None):
+        if not open_orders:
+            open_orders = self.retry(lambda: self.tradeapi.open_orders())
+
         for buy_order in list(self.buy_orders):
             if buy_order.id in [open_order.id for open_order in open_orders]:
                 # not processed yet :-()
@@ -207,6 +208,8 @@ class Trader(object):
                 self.debug_action("order BOUGHT %s" % buy_order)
                 self.bought_orders.append(buy_order)
                 self.buy_orders.remove(buy_order)
+
+        self.cancel_unknown_buy_orders(open_orders = open_orders)
 
     def place_sell_orders(self):
         for bought_order in list(self.bought_orders):
@@ -221,8 +224,9 @@ class Trader(object):
             self.sell_orders.append(sell_order)
             self.bought_orders.remove(bought_order)
 
-    def check_current_sell_orders(self):
-        open_orders = self.retry(lambda: self.tradeapi.open_orders())
+    def check_current_sell_orders(self, open_orders = None):
+        if not open_orders:
+            open_orders = self.retry(lambda: self.tradeapi.open_orders())
 
         for sell_order in list(self.sell_orders):
             if sell_order.id in [open_order.id for open_order in open_orders]:
@@ -235,6 +239,17 @@ class Trader(object):
                 self.sell_orders.remove(sell_order)
 
                 self.balance += sell_order.price * sell_order.amount
+
+    def cancel_unknown_buy_orders(self, open_orders = None):
+        if not open_orders:
+            open_orders = self.retry(lambda: self.tradeapi.open_orders())
+
+        for open_order in list(open_orders):
+            if open_order.type == 'buy':
+                if open_order.id not in [buy_order.id for buy_order in self.buy_orders]:
+                    self.debug_action("!! CANCELING UNKNOWN BUY ORDER %s !!" % open_order)
+                    self.tradeapi.cancel_order(id = open_order.id)
+
 
     def cancel_buy_orders(self):
         for buy_order in list(self.buy_orders):

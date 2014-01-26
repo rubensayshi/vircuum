@@ -6,7 +6,7 @@ import time
 import urllib
 from vircuum.tradeapi.common import simple_request_url
 
-simple_request_url = partial(simple_request_url, timeout = 6)
+simple_request_url = partial(simple_request_url, timeout = 20)
 
 
 class Order(object):
