@@ -4,6 +4,8 @@ import time
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
 class Trader(object):
+    RESET_THRESHOLD = 15 * 60
+
     def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, autostart, balance = None):
         self.tradeapi = tradeapi
         self.threshold = threshold
@@ -167,6 +169,16 @@ class Trader(object):
             self.buy_orders.remove(buy_order)
             self.balance += buy_order.amount * buy_order.price
 
+    def check_reset(self):
+        if len(self.sell_orders) > 0:
+            return
+
+        # if our newest buy order has surpassed our threshold then we should reset
+        if (time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
+            print "resetting BUY orders!"
+            self.cancel_buy_orders()
+            print "reset BUY orders!"
+
     def loop(self):
             (self.bid, self.ask) = self.get_price()
 
@@ -179,6 +191,8 @@ class Trader(object):
             self.place_sell_orders()
             self.check_current_sell_orders(open_orders)
             self.place_buy_orders()
+
+            self.check_reset()
 
     def finish(self):
         print "\n" *2
