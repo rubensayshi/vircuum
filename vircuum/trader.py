@@ -228,8 +228,6 @@ class Trader(object):
                 self.balance += sell_order.price * sell_order.amount
 
     def cancel_buy_orders(self):
-        print "cancel"
-        print self.buy_orders
         for buy_order in list(self.buy_orders):
 
             self.debug_action("canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price))
