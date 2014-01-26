@@ -51,7 +51,7 @@ class TradeAPI(object):
         if self.debug: print data
         data = json.loads(data)
 
-        return [Order(row['id'], int(row['time']), row['type'], float(row['price']), float(row['amount']), row['pending']) for row in data]
+        return [Order(row['id'], int(row['time'] / 1000), row['type'], float(row['price']), float(row['amount']), row['pending']) for row in data]
 
     def place_order(self, type, amount, price):
         args = dict(type = type, amount = amount, price = price)
@@ -61,7 +61,7 @@ class TradeAPI(object):
         if self.debug: print data
         data = json.loads(data)
 
-        return Order(data['id'], int(data['time']), data['type'], float(data['price']), float(data['amount']), data['pending'])
+        return Order(data['id'], int(data['time'] / 1000), data['type'], float(data['price']), float(data['amount']), data['pending'])
 
     def cancel_order(self, id):
         args = dict(id = id)

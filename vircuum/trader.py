@@ -174,7 +174,7 @@ class Trader(object):
             return
 
         # if our newest buy order has surpassed our threshold then we should reset
-        if (time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
+        if int(time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
             print "resetting BUY orders!"
             self.cancel_buy_orders()
             print "reset BUY orders!"
