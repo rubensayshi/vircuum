@@ -195,7 +195,9 @@ class Trader(object):
 
             self.balance -= (price * amount)
 
-    def check_current_buy_orders(self, open_orders):
+    def check_current_buy_orders(self):
+        open_orders = self.retry(lambda: self.tradeapi.open_orders())
+        
         for buy_order in list(self.buy_orders):
             if buy_order.id in [open_order.id for open_order in open_orders]:
                 # not processed yet :-()
@@ -219,7 +221,9 @@ class Trader(object):
             self.sell_orders.append(sell_order)
             self.bought_orders.remove(bought_order)
 
-    def check_current_sell_orders(self, open_orders):
+    def check_current_sell_orders(self):
+        open_orders = self.retry(lambda: self.tradeapi.open_orders())
+
         for sell_order in list(self.sell_orders):
             if sell_order.id in [open_order.id for open_order in open_orders]:
                 # not processed yet :-()
@@ -293,11 +297,9 @@ class Trader(object):
     def loop(self):
         (self.bid, self.ask) = self.get_price()
 
-        open_orders = self.retry(lambda: self.tradeapi.open_orders())
-
-        self.check_current_buy_orders(open_orders)
+        self.check_current_buy_orders()
         self.place_sell_orders()
-        self.check_current_sell_orders(open_orders)
+        self.check_current_sell_orders()
         self.place_buy_orders()
         self.check_reset()
 
