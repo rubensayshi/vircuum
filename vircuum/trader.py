@@ -3,6 +3,50 @@ import time
 
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
+# {col1head:<{col1len}}
+# {myfloat:15.8f}
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#|  BID:  1475.495025 | 10min MIN: 1475.495025 | 30min MIN: 1475.495025  |
+#|  SELL: 1475.495025 | 10min MAX: 1475.495025 | 30min MAX: 1475.495025  |
+#=========================================================================
+#| placing BUY order for [0.007712] @ [0.043310]
+#| placed BUY order {'amount': 0.00771152, 'type': u'buy', 'price': 0.04331025, 'id': u'253419312'}
+#| placing BUY order for [0.007719] @ [0.043267]
+#| placed BUY order {'amount': 0.00771924, 'type': u'buy', 'price': 0.04326694, 'id': u'253419328'}
+#| placing BUY order for [0.007727] @ [0.043224]
+#| placed BUY order {'amount': 0.00772697, 'type': u'buy', 'price': 0.04322367, 'id': u'253419343'}
+#=========================================================================
+#|  ---------- BUY ORDERS ---------  |  --------- SELL ORDERS ---------  |
+#|       amount        price    age  |       amount        price    age  |
+#|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  |
+#|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  | 
+#|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  |
+#|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  |
+#|  1199.007712  1475.495025  9999s  |  `199.007712  1475.495025  9999s  |
+#=========================================================================
+#| loop took [3], sleeping[1.072918]
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ACTION_TEMPLATE = """| {action}"""
+
+PRICE_TEMPLATE = "{:11.6f}"
+AMOUNT_TEMPLATE = "{:11.6f}"
+ORDER_TEMPLATE = """{amount:>11}  {price:>11}  {age:>4}{ageunit:>1}"""
+
+STATUS_TEMPLATE = """
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+|  BID:  {bid:>11} | 10min MIN:    0.000000 | 30min MIN:    0.000000  |
+|  SELL: {sell:>11} | 10min MAX:    0.000000 | 30min MAX:    0.000000  |
+=========================================================================
+{actionsbefore}
+=========================================================================
+|  ---------- BUY ORDERS ---------  |  --------- SELL ORDERS ---------  |
+|       amount        price    age  |       amount        price    age  |
+{orders}
+=========================================================================
+{actionsafter}
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+"""
+
 class Trader(object):
     RESET_THRESHOLD = 15 * 60
 
@@ -46,17 +90,24 @@ class Trader(object):
 
         def endofloop(t):
             tt = time.time() - t
-            sleeping = 5 - tt
-            print "loop took [%d], sleeping[%f]" % (tt, sleeping)
-            if sleeping > 0:
-                time.sleep(sleeping)
+            sleeping = max(5 - tt, 0)
+
+            return ("loop took [%d], sleeping[%f]" % (tt, sleeping), sleeping)
 
         try:
             while True:
                 t = time.time()
-                self.loop()
+                actions = []
+                for msg in self.loop():
+                    actions.append(msg)
+
                 self.maxbalance = max(self.balance, self.maxbalance)
-                endofloop(t)
+                endmsg, sleeping = endofloop(t)
+
+                self.print_status(self.bid, self.ask, self.buy_orders, self.sell_orders, actionsbefore = actions, actionsafter = [endmsg])
+                
+                if sleeping > 0:
+                    time.sleep(sleeping)
         finally:
             self.cancel_buy_orders()
             self.finish()
@@ -112,11 +163,11 @@ class Trader(object):
             price  = float("{:3.8f}".format(price * (1 - self.threshold)))
             amount = self.spend_per_step / price 
             
-            print "placing BUY order for [%f] @ [%f]" % (amount, price)
+            yield "placing BUY order for [%f] @ [%f]" % (amount, price)
             self.confirm(allow_autoconfirm = True)
 
             buy_order = self.retry(lambda: self.tradeapi.place_order(type = 'buy', price = price, amount = amount))
-            print "placed BUY order %s" % buy_order
+            yield "placed BUY order %s" % buy_order
 
             self.buy_orders.append(buy_order)
 
@@ -129,7 +180,7 @@ class Trader(object):
                 continue
             else:
                 # processed! \o/
-                print "order BOUGHT %s" % buy_order
+                yield "order BOUGHT %s" % buy_order
                 self.bought_orders.append(buy_order)
                 self.buy_orders.remove(buy_order)
 
@@ -137,11 +188,11 @@ class Trader(object):
         for bought_order in list(self.bought_orders):
             price = float("{:3.8f}".format(bought_order.price / (1 - self.threshold)))
 
-            print "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
+            yield "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
             self.confirm(allow_autoconfirm = True)
 
             sell_order = self.retry(lambda: self.tradeapi.place_order(type = 'sell', price = price, amount = bought_order.amount))
-            print "placed SELL order %s" % sell_order
+            yield "placed SELL order %s" % sell_order
 
             self.sell_orders.append(sell_order)
             self.bought_orders.remove(bought_order)
@@ -153,7 +204,7 @@ class Trader(object):
                 continue
             else:
                 # processed! \o/
-                print "order SOLD %s" % sell_order
+                yield "order SOLD %s" % sell_order
                 self.sold_orders.append(sell_order)
                 self.sell_orders.remove(sell_order)
 
@@ -162,9 +213,9 @@ class Trader(object):
     def cancel_buy_orders(self):
         for buy_order in list(self.buy_orders):
 
-            print "canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price)
+            yield "canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price)
             canceled = self.retry(lambda: self.tradeapi.cancel_order(id = buy_order.id))
-            print "canceled BUY order %s" % buy_order
+            yield "canceled BUY order %s" % buy_order
 
             self.buy_orders.remove(buy_order)
             self.balance += buy_order.amount * buy_order.price
@@ -175,24 +226,58 @@ class Trader(object):
 
         # if our newest buy order has surpassed our threshold then we should reset
         if int(time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
-            print "resetting BUY orders!"
+            yield "resetting BUY orders!"
             self.cancel_buy_orders()
-            print "reset BUY orders!"
+            yield "reset BUY orders!"
+
+    def print_status(self, bid, sell, buy_orders, sell_orders, actionsbefore, actionsafter):
+        null_order = ORDER_TEMPLATE.format(price = "", amount = "", age = "", ageunit = "")
+
+        def format_order(order):
+            age = int(time.time() - order.time)
+            ageunit = "s"
+            if (age > 3600 * 2):
+                age /= 3600
+                ageunit = "h"
+            elif (age > 00 * 10):
+                age /= 60
+                ageunit = "m"
+
+            return ORDER_TEMPLATE.format(price = PRICE_TEMPLATE.format(order.price),
+                                         amount = AMOUNT_TEMPLATE.format(order.amount),
+                                         age = age, 
+                                         ageunit = ageunit)
+
+
+        actionsbefore = "\n".join(actionsbefore)
+        actionsafter = "\n".join(actionsafter)
+
+        orders = []
+        for x in range(max(len(buy_orders), len(sell_orders))):
+            buy_order  = buy_orders[x]  if len(buy_orders) > x  else None
+            sell_order = sell_orders[x] if len(sell_orders) > x else None
+            buy_order  = format_order(buy_order)  if buy_order else null_order
+            sell_order = format_order(sell_order) if sell_order else null_order
+
+            orders.append("|  %s  |  %s  |" % (buy_order, sell_order))
+        orders = "\n".join(orders)
+
+        print STATUS_TEMPLATE.format(bid = bid, sell = sell, orders = orders, actionsbefore = actionsbefore, actionsafter = actionsafter)
+
 
     def loop(self):
-            (self.bid, self.ask) = self.get_price()
+        (self.bid, self.ask) = self.get_price()
 
-            print "bid: %f" % self.bid
-            print "sell: %f" % self.ask
+        open_orders = self.retry(lambda: self.tradeapi.open_orders())
 
-            open_orders = self.retry(lambda: self.tradeapi.open_orders())
+        msgs = []
+        msgs += list(self.check_current_buy_orders(open_orders))
+        msgs += list(self.place_sell_orders())
+        msgs += list(self.check_current_sell_orders(open_orders))
+        msgs += list(self.place_buy_orders())
+        msgs += list(self.check_reset())
 
-            self.check_current_buy_orders(open_orders)
-            self.place_sell_orders()
-            self.check_current_sell_orders(open_orders)
-            self.place_buy_orders()
-
-            self.check_reset()
+        return msgs
 
     def finish(self):
         print "\n" *2
