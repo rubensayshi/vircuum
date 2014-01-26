@@ -55,6 +55,7 @@ STATUS_TEMPLATE = """
 
 class Trader(object):
     RESET_THRESHOLD = 15 * 60
+    SLEEP_PER_LOOP = 0
 
     def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, autostart, balance = None):
         self.tradeapi = tradeapi
@@ -100,9 +101,9 @@ class Trader(object):
 
         def endofloop(t):
             tt = time.time() - t
-            sleeping = max(5 - tt, 0)
+            sleeping = max(Trader.SLEEP_PER_LOOP - tt, 0)
 
-            return ("loop took [%d], sleeping[%f]" % (tt, sleeping), sleeping)
+            return ("loop took [%f], sleeping[%f]" % (tt, sleeping), sleeping)
 
         try:
             while True:
