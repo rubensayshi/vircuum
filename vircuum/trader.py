@@ -295,7 +295,7 @@ class Trader(object):
         actionsafter = "\n".join(actionsafter)
 
         buy_orders  = sorted(buy_orders, key = lambda o: o.price, reverse = True)
-        sell_orders = sorted(buy_orders, key = lambda o: o.price, reverse = False)
+        sell_orders = sorted(sell_orders, key = lambda o: o.price, reverse = False)
 
         orders = []
         for x in range(max(len(buy_orders), len(sell_orders))):
