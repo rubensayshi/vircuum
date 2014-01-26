@@ -173,7 +173,6 @@ class Trader(object):
             self.check_current_buy_orders(open_orders)
             self.place_sell_orders()
             self.check_current_sell_orders(open_orders)
-
             self.place_buy_orders()
 
     def finish(self):
