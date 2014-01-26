@@ -31,14 +31,14 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ACTION_TEMPLATE = """| {action}"""
 
-
+BALANCE_TEMPLATE = "{:15.10f}"
 PRICE_TEMPLATE = "{:11.6f}"
 AMOUNT_TEMPLATE = "{:11.6f}"
 ORDER_TEMPLATE = """{amount:>11}  {price:>11}  {age:>4}{ageunit:>1}"""
 
 STATUS_TEMPLATE = """
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-|  TIME: {dt}  |  BALANCE: {balance:>11}                   |
+|  TIME: {dt}  |  BALANCE: {balance:>15}               |
 =========================================================================
 |  BID:  {bid:>11} | 10min MIN:    0.000000 | 30min MIN:    0.000000  |
 |  SELL: {sell:>11} | 10min MAX:    0.000000 | 30min MAX:    0.000000  |
@@ -269,7 +269,7 @@ class Trader(object):
             orders.append("|  %s  |  %s  |" % (buy_order, sell_order))
         orders = "\n".join(orders)
 
-        print STATUS_TEMPLATE.format(bid = bid, sell = sell, balance = balance,
+        print STATUS_TEMPLATE.format(bid = bid, sell = sell, balance = BALANCE_TEMPLATE.format(balance),
                                      dt = dt.strftime('%Y-%m-%d %H:%M:%S'),
                                      orders = orders, 
                                      actionsbefore = actionsbefore, actionsafter = actionsafter)
