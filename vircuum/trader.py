@@ -123,8 +123,6 @@ class Trader(object):
                 if sleeping > 0:
                     time.sleep(sleeping)
         finally:
-            self.debug_actions = []
-
             self.cancel_buy_orders()
 
             self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
