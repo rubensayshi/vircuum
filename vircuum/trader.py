@@ -82,6 +82,10 @@ class Trader(object):
         self.spend_per_step = self.balance / steps
         self.product = 0.0
         self.profit = 0.0
+        self.debug_actions = []
+
+    def debug_action(self, msg):
+        self.debug_actions.append(msg)
 
     def run(self):
         print "balance [%f], using [%f], perstep [%f]" % (self.real_balance, self.balance, self.spend_per_step)
@@ -103,21 +107,27 @@ class Trader(object):
         try:
             while True:
                 t = time.time()
-                actions = []
-                for msg in self.loop():
-                    actions.append(msg)
+                self.debug_actions = []
+
+                self.loop()
 
                 self.maxbalance = max(self.balance, self.maxbalance)
                 endmsg, sleeping = endofloop(t)
 
-                self.print_status(self.bid, self.ask, self.balance, datetime.now(), self.buy_orders, self.sell_orders, actionsbefore = actions, actionsafter = [endmsg])
+                self.print_status(self.bid, self.ask, self.balance, datetime.now(), self.buy_orders, self.sell_orders, actionsbefore = self.debug_actions, actionsafter = [endmsg])
                 
                 if sleeping > 0:
                     time.sleep(sleeping)
         finally:
-            print "FINALLY"
+            self.debug_actions = []
+
             self.cancel_buy_orders()
+
+            self.print_status(self.bid, self.ask, self.balance, datetime.now(), self.buy_orders, self.sell_orders, actionsbefore = self.debug_actions, actionsafter = [])
+
             self.finish()
+
+
 
     def get_price(self):
         (bid, ask, ) = self.retry(lambda: self.tradeapi.ticker())
@@ -170,11 +180,11 @@ class Trader(object):
             price  = float("{:3.8f}".format(price * (1 - self.threshold)))
             amount = self.spend_per_step / price 
             
-            yield "placing BUY order for [%f] @ [%f]" % (amount, price)
+            self.debug_action("placing BUY order for [%f] @ [%f]" % (amount, price))
             self.confirm(allow_autoconfirm = True)
 
             buy_order = self.retry(lambda: self.tradeapi.place_order(type = 'buy', price = price, amount = amount))
-            yield "placed BUY order %s" % buy_order
+            self.debug_action("placed BUY order %s" % buy_order)
 
             self.buy_orders.append(buy_order)
 
@@ -187,7 +197,7 @@ class Trader(object):
                 continue
             else:
                 # processed! \o/
-                yield "order BOUGHT %s" % buy_order
+                self.debug_action("order BOUGHT %s" % buy_order)
                 self.bought_orders.append(buy_order)
                 self.buy_orders.remove(buy_order)
 
@@ -195,11 +205,11 @@ class Trader(object):
         for bought_order in list(self.bought_orders):
             price = float("{:3.8f}".format(bought_order.price / (1 - self.threshold)))
 
-            yield "placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)
+            self.debug_action("placing SELL order for [%f] @ [%f]" % (bought_order.amount, price))
             self.confirm(allow_autoconfirm = True)
 
             sell_order = self.retry(lambda: self.tradeapi.place_order(type = 'sell', price = price, amount = bought_order.amount))
-            yield "placed SELL order %s" % sell_order
+            self.debug_action("placed SELL order %s" % sell_order)
 
             self.sell_orders.append(sell_order)
             self.bought_orders.remove(bought_order)
@@ -211,18 +221,20 @@ class Trader(object):
                 continue
             else:
                 # processed! \o/
-                yield "order SOLD %s" % sell_order
+                self.debug_action("order SOLD %s" % sell_order)
                 self.sold_orders.append(sell_order)
                 self.sell_orders.remove(sell_order)
 
                 self.balance += sell_order.price * sell_order.amount
 
     def cancel_buy_orders(self):
+        print "cancel"
+        print self.buy_orders
         for buy_order in list(self.buy_orders):
 
-            yield "canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price)
+            self.debug_action("canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price))
             canceled = self.retry(lambda: self.tradeapi.cancel_order(id = buy_order.id))
-            yield "canceled BUY order %s" % buy_order
+            self.debug_action("canceled BUY order %s" % buy_order)
 
             self.buy_orders.remove(buy_order)
             self.balance += buy_order.amount * buy_order.price
@@ -233,10 +245,9 @@ class Trader(object):
 
         # if our newest buy order has surpassed our threshold then we should reset
         if int(time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
-            yield "resetting BUY orders!"
-            for msg in self.cancel_buy_orders():
-                yield msg
-            yield "reset BUY orders!"
+            self.debug_action("resetting BUY orders!")
+            self.cancel_buy_orders()
+            self.debug_action("reset BUY orders!")
 
     def print_status(self, bid, sell, balance, dt, buy_orders, sell_orders, actionsbefore, actionsafter):
         null_order = ORDER_TEMPLATE.format(price = "", amount = "", age = "", ageunit = "")
@@ -281,14 +292,11 @@ class Trader(object):
 
         open_orders = self.retry(lambda: self.tradeapi.open_orders())
 
-        msgs = []
-        msgs += list(self.check_current_buy_orders(open_orders))
-        msgs += list(self.place_sell_orders())
-        msgs += list(self.check_current_sell_orders(open_orders))
-        msgs += list(self.place_buy_orders())
-        msgs += list(self.check_reset())
-
-        return msgs
+        self.check_current_buy_orders(open_orders)
+        self.place_sell_orders()
+        self.check_current_sell_orders(open_orders)
+        self.place_buy_orders()
+        self.check_reset()
 
     def finish(self):
         print "\n" *2
