@@ -293,6 +293,9 @@ class Trader(object):
         actionsbefore = "\n".join(actionsbefore)
         actionsafter = "\n".join(actionsafter)
 
+        buy_orders  = sorted(buy_orders, key = lambda o: o.price, reverse = True)
+        sell_orders = sorted(buy_orders, key = lambda o: o.price, reverse = False)
+
         orders = []
         for x in range(max(len(buy_orders), len(sell_orders))):
             buy_order  = buy_orders[x]  if len(buy_orders) > x  else None
