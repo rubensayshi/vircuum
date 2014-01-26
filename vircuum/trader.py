@@ -1,11 +1,14 @@
 from collections import namedtuple
 import time
+from datetime import datetime
 
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
 # {col1head:<{col1len}}
 # {myfloat:15.8f}
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#|  TIME: YYYY-MM-DD HH:II:SS  |  BALANCE: 1475.495025                   |
+#=========================================================================
 #|  BID:  1475.495025 | 10min MIN: 1475.495025 | 30min MIN: 1475.495025  |
 #|  SELL: 1475.495025 | 10min MAX: 1475.495025 | 30min MAX: 1475.495025  |
 #=========================================================================
@@ -28,12 +31,15 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ACTION_TEMPLATE = """| {action}"""
 
+
 PRICE_TEMPLATE = "{:11.6f}"
 AMOUNT_TEMPLATE = "{:11.6f}"
 ORDER_TEMPLATE = """{amount:>11}  {price:>11}  {age:>4}{ageunit:>1}"""
 
 STATUS_TEMPLATE = """
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+|  TIME: {dt}  |  BALANCE: {balance:>11}                   |
+=========================================================================
 |  BID:  {bid:>11} | 10min MIN:    0.000000 | 30min MIN:    0.000000  |
 |  SELL: {sell:>11} | 10min MAX:    0.000000 | 30min MAX:    0.000000  |
 =========================================================================
@@ -67,7 +73,7 @@ class Trader(object):
         self.history = []
 
         if not balance:
-            self.real_balance = self.tradeapi.balance()
+            self.real_balance = self.retry(lambda: tradeapi.balance())
         else:
             self.real_balance = balance
 
@@ -104,7 +110,7 @@ class Trader(object):
                 self.maxbalance = max(self.balance, self.maxbalance)
                 endmsg, sleeping = endofloop(t)
 
-                self.print_status(self.bid, self.ask, self.buy_orders, self.sell_orders, actionsbefore = actions, actionsafter = [endmsg])
+                self.print_status(self.bid, self.ask, self.balance, datetime.now(), self.buy_orders, self.sell_orders, actionsbefore = actions, actionsafter = [endmsg])
                 
                 if sleeping > 0:
                     time.sleep(sleeping)
@@ -231,7 +237,7 @@ class Trader(object):
                 yield msg
             yield "reset BUY orders!"
 
-    def print_status(self, bid, sell, buy_orders, sell_orders, actionsbefore, actionsafter):
+    def print_status(self, bid, sell, balance, dt, buy_orders, sell_orders, actionsbefore, actionsafter):
         null_order = ORDER_TEMPLATE.format(price = "", amount = "", age = "", ageunit = "")
 
         def format_order(order):
@@ -263,7 +269,10 @@ class Trader(object):
             orders.append("|  %s  |  %s  |" % (buy_order, sell_order))
         orders = "\n".join(orders)
 
-        print STATUS_TEMPLATE.format(bid = bid, sell = sell, orders = orders, actionsbefore = actionsbefore, actionsafter = actionsafter)
+        print STATUS_TEMPLATE.format(bid = bid, sell = sell, balance = balance,
+                                     dt = dt.strftime('%Y-%m-%d %H:%M:%S'),
+                                     orders = orders, 
+                                     actionsbefore = actionsbefore, actionsafter = actionsafter)
 
 
     def loop(self):
