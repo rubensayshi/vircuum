@@ -4,12 +4,13 @@ import time
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 
 class Trader(object):
-    def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, balance = None):
+    def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, autostart, balance = None):
         self.tradeapi = tradeapi
         self.threshold = threshold
         self.use_balance = use_balance
         self.steps = steps
         self.autoconfirm = autoconfirm
+        self.autostart = autostart
 
         self.bid = 0
         self.ask = 0
@@ -34,8 +35,12 @@ class Trader(object):
         print "balance [%f], using [%f], perstep [%f]" % (self.real_balance, self.balance, self.spend_per_step)
         print "profit margin: [%f] = [%f%%]" % (self.threshold, self.threshold * 100)
 
-        print "run?"
-        self.confirm()
+        if not self.autostart:
+            print "run?"
+            self.confirm()
+        else:
+            print "sleeping 5 seconds before starting ..."
+            time.sleep(5)
 
         def endofloop(t):
             tt = time.time() - t
