@@ -252,7 +252,7 @@ class Trader(object):
             self.cancel_buy_orders()
             self.debug_action("reset BUY orders!")
 
-    def print_status(self, bid, sell, balance, dt, buy_orders, sell_orders, actionsbefore, actionsafter):
+    def print_status(self, bid, ask, balance, dt, buy_orders, sell_orders, actionsbefore, actionsafter):
         null_order = ORDER_TEMPLATE.format(price = "", amount = "", age = "", ageunit = "")
 
         def format_order(order):
@@ -284,7 +284,7 @@ class Trader(object):
             orders.append("|  %s  |  %s  |" % (buy_order, sell_order))
         orders = "\n".join(orders)
 
-        print STATUS_TEMPLATE.format(bid = bid, sell = sell, balance = BALANCE_TEMPLATE.format(balance),
+        print STATUS_TEMPLATE.format(bid = bid, ask = ask, balance = BALANCE_TEMPLATE.format(balance),
                                      dt = dt.strftime('%Y-%m-%d %H:%M:%S'),
                                      orders = orders, 
                                      actionsbefore = actionsbefore, actionsafter = actionsafter)
