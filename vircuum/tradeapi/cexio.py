@@ -23,11 +23,13 @@ class Order(object):
 
 
 class TradeAPI(object):
-    def __init__(self, api_key, api_secret, username, debug = False):
+    def __init__(self, api_key, api_secret, username, noncemod = 1, noncenum = 0, debug = False):
         self.api_key = api_key
         self.api_secret = api_secret
         self.username = username
         self.debug = debug
+        self.noncenum = noncenum
+        self.noncemod = noncemod
         self.prev_nonce = None
 
     def ticker(self):
@@ -74,16 +76,16 @@ class TradeAPI(object):
 
     def nonce(self):
         # nonce needs to be increasing, and this also ensures we don't break the 1 req/sec rate limit
-        nonce = str(int(time.time()))
-        while nonce == self.prev_nonce:
-            nonce = str(int(time.time()))
+        nonce = int(time.time())
+        while nonce == self.prev_nonce or (nonce % self.noncemod) != self.noncenum:
+            nonce = int(time.time())
             time.sleep(0.01)
         
         if self.debug: print "nonce", nonce
 
         self.prev_nonce = nonce
 
-        return nonce
+        return str(nonce)
 
     def auth_args(self):
         nonce = self.nonce()

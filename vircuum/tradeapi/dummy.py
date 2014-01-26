@@ -2,8 +2,6 @@ from vircuum.tradeapi.common import isnumber
 import time
 import random
 
-autoinc = 0
-
 class Order(object):
     def __init__(self, id, time, type, price, amount, pending):
         self.id = id
@@ -20,28 +18,32 @@ class Order(object):
 class TradeAPI(object):
     TIME_PER_LOOP = 1
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, noncemod = 1, noncenum = 0, *args, **kwargs):
         self.price = 500
         self.dummy_loop = 0
         self.dummy_loop_dir = 0
         self._balance = 250
         self.orders = []
+        self.prev_nonce = None
+        self.noncenum = noncenum
+        self.noncemod = noncemod
+        self.debug = True
 
     def ticker(self):
+        self.nonce()
         self.dummy_price()
         return (self.price, self.price, )
 
     def balance(self):
+        self.nonce()
         return self._balance
 
     def open_orders(self):
+        self.nonce()
         return self.orders
 
     def place_order(self, type, amount, price):
-        global autoinc
-        autoinc += 1
-
-        order = Order(id = autoinc, time = time.time(), type = type, price = price, amount = amount, pending = False)
+        order = Order(id = self.nonce(), time = time.time(), type = type, price = price, amount = amount, pending = False)
 
         if type == 'buy':
             self._balance -= price * amount
@@ -73,6 +75,19 @@ class TradeAPI(object):
                     self.orders.remove(order)
             else:
                 raise Exception()
+
+    def nonce(self):
+        # nonce needs to be increasing, and this also ensures we don't break the 1 req/sec rate limit
+        nonce = int(time.time())
+        while nonce == self.prev_nonce or (nonce % self.noncemod) != self.noncenum:
+            nonce = int(time.time())
+            time.sleep(0.01)
+        
+        if self.debug: print "nonce", nonce
+
+        self.prev_nonce = nonce
+
+        return nonce
 
     def dummy_price(self):
 
