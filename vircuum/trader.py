@@ -137,8 +137,8 @@ class Trader(object):
         (bid, ask, ) = self.retry(lambda: self.tradeapi.ticker())
         return (bid, ask, )
 
-    def retry(self, fn, tries = 3):
-        for retry in range(3):
+    def retry(self, fn, tries = 5):
+        for retry in range(tries):
             try:
                 return fn()
             except KeyboardInterrupt:
