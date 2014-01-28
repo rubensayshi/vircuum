@@ -18,22 +18,27 @@ parser.add_argument("-n", "--noncemod", dest="noncemod", type=int, default=1, re
 
 args = parser.parse_args()
 
+try:
+    from config import config
+except:
+    raise Exception("You need to copy `config.example.py` to `config.py` and fill in your data")
+
 extra = {}
 
 if args.exchange == 'cexio':
     from vircuum.tradeapi.cexio import TradeAPI
-    tradeapi = TradeAPI(api_key="5kqjg6GJ8Omzby4LUbZXBsmOb68",
-                        api_secret="QHec1J1fbWjlfaP6i4GB9ZiUs",
-                        username="rubensayshi2",
+    tradeapi = TradeAPI(api_key=config.get('CEXIO_API_KEY'),
+                        api_secret=config.get('CEXIO_API_SECRET'),
+                        username=config.get('CEXIO_USERNAME'),
                         noncenum=args.noncenum,
                         noncemod=args.noncemod,
                         debug=args.debug)
 
 elif args.exchange == 'bitstamp':
     from vircuum.tradeapi.bitstamp import TradeAPI
-    tradeapi = TradeAPI(api_key="1wuC07xlHWsNQsPT2AqZneGjJY4ozGAC",
-                        api_secret="P8YLoxqErAMTYeC962tvZaQj2YPAoODP",
-                        clientid="838807",
+    tradeapi = TradeAPI(api_key=config.get('BITSTAMP_API_KEY'),
+                        api_secret=config.get('BITSTAMP_API_SECRET'),
+                        clientid=config.get('BITSTAMP_CLIENTID'),
                         noncenum=args.noncenum,
                         noncemod=args.noncemod,
                         debug=args.debug)
