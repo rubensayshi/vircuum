@@ -46,6 +46,7 @@ class TradeAPI(object):
         return self.place_order(type = 'buy', amount = amount, price = price)
 
     def place_sell_order(self, amount, price):
+        raise Exception("fail")
         return self.place_order(type = 'sell', amount = amount, price = price)
     
     def place_order(self, type, amount, price):
