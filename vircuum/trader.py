@@ -147,14 +147,19 @@ class Trader(object):
         (bid, ask, ) = self.retry(lambda: self.tradeapi.ticker())
         return (bid, ask, )
 
-    def retry(self, fn, tries = 5):
+    def retry(self, fn, tries = 5, wait = 1.0):
         for retry in range(tries):
+            t = time.time()
             try:
                 return fn()
             except KeyboardInterrupt:
                 raise
             except:
                 pass
+
+            sleeping = wait - (time.time() - t)
+            if sleeping > 0.0:
+                time.sleep(sleeping)
         else:
             raise
             return
