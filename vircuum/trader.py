@@ -187,7 +187,7 @@ class Trader(object):
             self.debug_action("placing BUY order for [%f] @ [%f]" % (amount, price))
             self.confirm(allow_autoconfirm = True)
 
-            buy_order = self.retry(lambda: self.tradeapi.place_order(type = 'buy', price = price, amount = amount))
+            buy_order = self.retry(lambda: self.tradeapi.place_buy_order(price = price, amount = amount))
             self.debug_action("placed BUY order %s" % buy_order)
 
             self.buy_orders.append(buy_order)
@@ -217,7 +217,7 @@ class Trader(object):
             self.debug_action("placing SELL order for [%f] @ [%f]" % (bought_order.amount, price))
             self.confirm(allow_autoconfirm = True)
 
-            sell_order = self.retry(lambda: self.tradeapi.place_order(type = 'sell', price = price, amount = bought_order.amount))
+            sell_order = self.retry(lambda: self.tradeapi.place_sell_order(price = price, amount = bought_order.amount))
             self.debug_action("placed SELL order %s" % sell_order)
 
             self.sell_orders.append(sell_order)
