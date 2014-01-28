@@ -123,13 +123,23 @@ class Trader(object):
                 if sleeping > 0:
                     time.sleep(sleeping)
         finally:
-            self.cancel_buy_orders()
+            try:
+                self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
+                                  dt = datetime.now(), 
+                                  buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
+                                  actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state before canceling buy orders ---^"])
 
-            self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
-                              dt = datetime.now(), 
-                              buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
-                              actionsbefore = self.debug_actions, actionsafter = [])
-            self.finish()
+                self.retry(lambda: self.cancel_buy_orders())
+
+                self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
+                                  dt = datetime.now(), 
+                                  buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
+                                  actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state after canceling buy orders ---^"])
+                self.finish()
+            except Exception, e:
+                # supress this, we want to see the original error!!
+                print e
+
 
 
 
