@@ -106,22 +106,41 @@ class Trader(object):
             return ("loop took [%f], sleeping[%f]" % (tt, sleeping), sleeping)
 
         try:
+            fails = 0
+
             while True:
-                t = time.time()
-                self.debug_actions = []
+                try:
+                    t = time.time()
+                    self.debug_actions = []
 
-                self.loop()
+                    self.loop()
 
-                self.maxbalance = max(self.balance, self.maxbalance)
-                endmsg, sleeping = endofloop(t)
+                    self.maxbalance = max(self.balance, self.maxbalance)
+                    endmsg, sleeping = endofloop(t)
 
-                self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
-                                  dt = datetime.now(), 
-                                  buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
-                                  actionsbefore = self.debug_actions, actionsafter = [endmsg])
-                
-                if sleeping > 0:
-                    time.sleep(sleeping)
+                    self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
+                                      dt = datetime.now(), 
+                                      buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
+                                      actionsbefore = self.debug_actions, actionsafter = [endmsg])
+                    
+                    if sleeping > 0:
+                        time.sleep(sleeping)
+
+                    fails = 0
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    print """
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!                  LOOP FAILED [%d], RETRYING ...                   !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+""" % fails
+                    fails += 1
+
+                    if fails >= 3:
+                        raise
         finally:
             try:
                 self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
