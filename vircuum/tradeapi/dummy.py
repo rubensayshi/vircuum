@@ -42,6 +42,12 @@ class TradeAPI(object):
         self.nonce()
         return self.orders
 
+    def place_buy_order(self, amount, price):
+        return self.place_order(type = 'buy', amount = amount, price = price)
+
+    def place_sell_order(self, amount, price):
+        return self.place_order(type = 'sell', amount = amount, price = price)
+    
     def place_order(self, type, amount, price):
         order = Order(id = self.nonce(), time = time.time(), type = type, price = price, amount = amount, pending = False)
 
