@@ -2,13 +2,8 @@
 HELP:
 `./run.py -h`
 
-CONFIG cexio:
-edit `run.py` and change:
-`
-api_key="<CEXIO-APIKEY>",
-api_secret="<CEXIO-APISECRET>",
-username="<CEXIO-USERNAME>", 
-`
+CONFIG:
+edit `config.py` and fill in the information.
 
 EXAMPLES:
  - cex.io, using 10% of total balance, spread across 3 steps, using 0.1% threshold for buying and profit (0.001)
