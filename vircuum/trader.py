@@ -157,7 +157,7 @@ class Trader(object):
             except:
                 pass
 
-            sleeping = wait - (time.time() - t)
+            sleeping = (wait * float(tries)) - (time.time() - t)
             if sleeping > 0.0:
                 time.sleep(sleeping)
         else:
