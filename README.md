@@ -3,6 +3,7 @@ HELP:
 `./run.py -h`
 
 CONFIG:
+copy `config.example.py` to `config.py` (creating a new file :D).  
 edit `config.py` and fill in the information.
 
 EXAMPLES:

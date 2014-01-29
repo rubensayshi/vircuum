@@ -7,7 +7,8 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 # {col1head:<{col1len}}
 # {myfloat:15.8f}
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#|  TIME: YYYY-MM-DD HH:II:SS  |  BALANCE: 1475.495025                   |
+#|  TIME:   YYYY-MM-DD HH:II:SS  |  PROFIT:  111475.49502564 (9999999)   |
+#|  START:  111475.49502564      |  BALANCE: 111475.49502564             |
 #=========================================================================
 #|  BID:  1475.495025 | 10min MIN: 1475.495025 | 30min MIN: 1475.495025  |
 #|  SELL: 1475.495025 | 10min MAX: 1475.495025 | 30min MAX: 1475.495025  |
@@ -25,20 +26,31 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 #|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  | 
 #|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  |
 #|     0.007712     0.043310  9999s  |     0.007712     0.043310  9999s  |
-#|  1199.007712  1475.495025  9999s  |  `199.007712  1475.495025  9999s  |
+#|  1199.007712  1475.495025  9999s  |  1199.007712  1475.495025  9999s  |
+#-------------------------------------------------------------------------
+#|       amount          sum         |       amount          sum         |
+#|  1199.007712  1199.007712         |  1199.007712  1199.007712         |
+#=========================================================================
+#|  PROFIT CUR:  111475.49502564     |  1475.495025%                     |
+#|  PROFIT LOW:  111475.49502564     |  1475.495025%                     |
+#|  PROFIT MID:  111475.49502564     |  1475.495025%                     |
+#|  PROFIT HIGH: 111475.49502564     |  1475.495025%                     |
 #=========================================================================
 #| loop took [3], sleeping[1.072918]
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ACTION_TEMPLATE = """| {action}"""
 
-BALANCE_TEMPLATE = "{:15.10f}"
-PRICE_TEMPLATE = "{:11.6f}"
-AMOUNT_TEMPLATE = "{:11.6f}"
+SHORT_TEMPLATE = "{:11.6f}"
+LONG_TEMPLATE = "{:15.8f}"
+BALANCE_TEMPLATE = LONG_TEMPLATE
+PRICE_TEMPLATE = SHORT_TEMPLATE
+AMOUNT_TEMPLATE = SHORT_TEMPLATE
 ORDER_TEMPLATE = """{amount:>11}  {price:>11}  {age:>4}{ageunit:>1}"""
 
 STATUS_TEMPLATE = """
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-|  TIME: {dt}  |  BALANCE: {balance:>15}               |
+|  TIME:   {dt:>19}  |  PROFIT:  {cur_profit:>15} ({sold_cnt:>7})   |
+|  START:  {start_balance:>15}      |  BALANCE: {balance:>15}             |
 =========================================================================
 |  BID:  {bid:>11} | 10min MIN:    0.000000 | 30min MIN:    0.000000  |
 |  SELL: {ask:>11} | 10min MAX:    0.000000 | 30min MAX:    0.000000  |
@@ -48,6 +60,13 @@ STATUS_TEMPLATE = """
 |  ---------- BUY ORDERS ---------  |  --------- SELL ORDERS ---------  |
 |       amount        price    age  |       amount        price    age  |
 {orders}
+-------------------------------------------------------------------------
+|       amount          sum         |       amount          sum         |
+|  {buy_amount:>11}  {buy_sum:>11}         |  {sell_amount:>11}  {sell_sum:>11}         |
+=========================================================================
+|  PROFIT CUR:  {cur_profit:>15}     |  {cur_profit_p:>11}%                     |
+|  PROFIT LOW:  {low_profit:>15}     |  {low_profit_p:>11}%                     |
+|  PROFIT HIGH: {high_profit:>15}     |  {high_profit_p:>11}%                     |
 =========================================================================
 {actionsafter}
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -57,13 +76,15 @@ class Trader(object):
     RESET_THRESHOLD = 15 * 60
     SLEEP_PER_LOOP = 0
 
-    def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, autostart, balance = None):
+    def __init__(self, tradeapi, threshold, use_balance, use_balance_exact, steps, autoconfirm, autostart, retries, balance = None):
         self.tradeapi = tradeapi
         self.threshold = threshold
         self.use_balance = use_balance
+        self.use_balance_exact = use_balance_exact
         self.steps = steps
         self.autoconfirm = autoconfirm
         self.autostart = autostart
+        self.retries = retries
 
         self.bid = 0
         self.ask = 0
@@ -78,7 +99,12 @@ class Trader(object):
         else:
             self.real_balance = balance
 
-        self.start_balance = self.use_balance * self.real_balance
+        if self.use_balance_exact:
+            assert self.real_balance >= self.use_balance_exact
+            self.start_balance = self.use_balance_exact
+        else:
+            self.start_balance = self.use_balance * self.real_balance
+
         self.maxbalance = self.balance = self.start_balance
         self.spend_per_step = self.balance / steps
         self.product = 0.0
@@ -118,11 +144,8 @@ class Trader(object):
                     self.maxbalance = max(self.balance, self.maxbalance)
                     endmsg, sleeping = endofloop(t)
 
-                    self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
-                                      dt = datetime.now(), 
-                                      buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
-                                      actionsbefore = self.debug_actions, actionsafter = [endmsg])
-                    
+                    self.print_status(actionsbefore = self.debug_actions, actionsafter = [endmsg])
+
                     if sleeping > 0:
                         time.sleep(sleeping)
 
@@ -139,21 +162,15 @@ class Trader(object):
 """ % fails
                     fails += 1
 
-                    if fails >= 3:
+                    if fails >= self.retries:
                         raise
         finally:
             try:
-                self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
-                                  dt = datetime.now(), 
-                                  buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
-                                  actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state before canceling buy orders ---^"])
+                self.print_status(actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state before canceling buy orders ---^"])
 
                 self.retry(lambda: self.cancel_buy_orders())
 
-                self.print_status(bid = self.bid, ask = self.ask, balance = self.balance,
-                                  dt = datetime.now(), 
-                                  buy_orders = self.buy_orders, sell_orders = self.sell_orders, 
-                                  actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state after canceling buy orders ---^"])
+                self.print_status(actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state after canceling buy orders ---^"])
                 self.finish()
             except Exception, e:
                 # supress this, we want to see the original error!!
@@ -304,7 +321,9 @@ class Trader(object):
             self.cancel_buy_orders()
             self.debug_action("reset BUY orders!")
 
-    def print_status(self, bid, ask, balance, dt, buy_orders, sell_orders, actionsbefore, actionsafter):
+    def print_status(self, actionsbefore, actionsafter):
+        dt = datetime.now()
+
         null_order = ORDER_TEMPLATE.format(price = "", amount = "", age = "", ageunit = "")
 
         def format_order(order):
@@ -326,8 +345,8 @@ class Trader(object):
         actionsbefore = "\n".join(actionsbefore)
         actionsafter = "\n".join(actionsafter)
 
-        buy_orders  = sorted(buy_orders, key = lambda o: o.price, reverse = True)
-        sell_orders = sorted(sell_orders, key = lambda o: o.price, reverse = False)
+        buy_orders  = sorted(self.buy_orders, key = lambda o: o.price, reverse = True)
+        sell_orders = sorted(self.sell_orders, key = lambda o: o.price, reverse = False)
 
         orders = []
         for x in range(max(len(buy_orders), len(sell_orders))):
@@ -339,10 +358,16 @@ class Trader(object):
             orders.append("|  %s  |  %s  |" % (buy_order, sell_order))
         orders = "\n".join(orders)
 
-        print STATUS_TEMPLATE.format(bid = bid, ask = ask, balance = BALANCE_TEMPLATE.format(balance),
-                                     dt = dt.strftime('%Y-%m-%d %H:%M:%S'),
-                                     orders = orders, 
-                                     actionsbefore = actionsbefore, actionsafter = actionsafter)
+        args = dict(
+            bid = self.bid, ask = self.ask,
+            balance = BALANCE_TEMPLATE.format(self.balance), start_balance = BALANCE_TEMPLATE.format(self.start_balance),
+            dt = dt.strftime('%Y-%m-%d %H:%M:%S'),
+            orders = orders,
+            actionsbefore = actionsbefore, actionsafter = actionsafter
+        )
+        args.update(self.profit_data())
+
+        print STATUS_TEMPLATE.format(**args)
 
 
     def loop(self):
@@ -353,6 +378,55 @@ class Trader(object):
         self.check_current_sell_orders()
         self.place_buy_orders()
         self.check_reset()
+
+    def profit_data(self):
+        data = {
+            'cur_profit'      : 0,
+            'cur_profit_p'    : 0,
+            'low_profit'      : 0,
+            'low_profit_p'    : 0,
+            'high_profit'     : 0,
+            'high_profit_p'   : 0,
+
+            'buy_amount'      : 0,
+            'buy_sum'         : 0,
+            'buy_cnt'         : 0,
+            'sell_amount'     : 0,
+            'sell_sum'        : 0,
+            'sell_cnt'        : 0,
+            'bought_amount'   : 0,
+            'bought_sum'      : 0,
+            'bought_cnt'      : 0,
+            'sold_amount'     : 0,
+            'sold_sum'        : 0,
+            'sold_cnt'        : 0,
+        }
+
+
+        for k, fn in [
+            ('cur',  None),
+            ('low',  lambda o: max(self.bid, (o.price / (1 + self.threshold)))),
+            ('high', lambda o: o.price),
+        ]:
+            balance = self.balance
+            balance += sum((o.amount * o.price) for o in self.buy_orders)
+
+            if fn:
+                balance += sum(o.amount * fn(o) for o in self.sell_orders)
+
+            profit = balance - self.start_balance
+
+            data['%s_profit' % k]   = BALANCE_TEMPLATE.format(profit)
+            data['%s_profit_p' % k] = PRICE_TEMPLATE.format(profit / self.start_balance * 100)
+
+        for k in ['buy', 'sell', 'sold']:
+            orders = getattr(self, '%s_orders' % k)
+
+            data['%s_amount' % k] = AMOUNT_TEMPLATE.format((sum(o.amount for o in orders)))
+            data['%s_sum' % k]    = PRICE_TEMPLATE.format((sum(o.price * o.amount for o in orders)))
+            data['%s_cnt' % k]    = int(len(orders))
+
+        return data
 
     def finish(self):
         print "\n" *2
