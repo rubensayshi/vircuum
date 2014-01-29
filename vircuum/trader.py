@@ -49,8 +49,8 @@ ORDER_TEMPLATE = """{amount:>11}  {price:>11}  {age:>4}{ageunit:>1}"""
 
 STATUS_TEMPLATE = """
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-|  TIME: {dt:>19}  |  PROFIT:  {cur_profit:>15} ({sold_cnt:>7})   |
-|  START:    {start_balance:>15}  |  BALANCE: {balance:>15}             |
+|  TIME:   {dt:>19}  |  PROFIT:  {cur_profit:>15} ({sold_cnt:>7})   |
+|  START:  {start_balance:>15}      |  BALANCE: {balance:>15}             |
 =========================================================================
 |  BID:  {bid:>11} | 10min MIN:    0.000000 | 30min MIN:    0.000000  |
 |  SELL: {ask:>11} | 10min MAX:    0.000000 | 30min MAX:    0.000000  |
@@ -100,7 +100,7 @@ class Trader(object):
             self.real_balance = balance
 
         if self.use_balance_exact:
-            assert self.real_balance > self.use_balance_exact
+            assert self.real_balance >= self.use_balance_exact
             self.start_balance = self.use_balance_exact
         else:
             self.start_balance = self.use_balance * self.real_balance
