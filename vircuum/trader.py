@@ -76,10 +76,11 @@ class Trader(object):
     RESET_THRESHOLD = 15 * 60
     SLEEP_PER_LOOP = 0
 
-    def __init__(self, tradeapi, threshold, use_balance, steps, autoconfirm, autostart, retries, balance = None):
+    def __init__(self, tradeapi, threshold, use_balance, use_balance_exact, steps, autoconfirm, autostart, retries, balance = None):
         self.tradeapi = tradeapi
         self.threshold = threshold
         self.use_balance = use_balance
+        self.use_balance_exact = use_balance_exact
         self.steps = steps
         self.autoconfirm = autoconfirm
         self.autostart = autostart
@@ -98,7 +99,12 @@ class Trader(object):
         else:
             self.real_balance = balance
 
-        self.start_balance = self.use_balance * self.real_balance
+        if self.use_balance_exact:
+            assert self.real_balance > self.use_balance_exact
+            self.start_balance = self.use_balance_exact
+        else:
+            self.start_balance = self.use_balance * self.real_balance
+
         self.maxbalance = self.balance = self.start_balance
         self.spend_per_step = self.balance / steps
         self.product = 0.0
