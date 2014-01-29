@@ -5,11 +5,12 @@ VERSION=$1
 # $VERSION is required
 [ -z "${VERSION}" ] && echo "PLEASE SPECIFY VERSION" && exit 1
 
+BUILDDIR="./tmp/build"
 BUILD="vircuum-${VERSION}"
-DIR="./build/${BUILD}"
+DIR="${BUILDDIR}/${BUILD}"
 
-rm -rf ./build
-mkdir ./build
+rm -rf ${BUILDDIR}
+mkdir ${BUILDDIR}
 
 mkdir ${DIR}
 mkdir ${DIR}/tmp
@@ -21,6 +22,6 @@ cp -r ./vircuum ${DIR}/vircuum
 
 find ${DIR} -name "*.pyc" -exec rm -rf {} \;
 
-cd ./build
+cd ${BUILDDIR}
 tar cvzf ${BUILD}.tar.gz ${BUILD}
 
