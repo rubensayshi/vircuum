@@ -15,7 +15,7 @@ mkdir ${BUILDDIR}
 mkdir ${DIR}
 mkdir ${DIR}/tmp
 cp ./run.py ${DIR}/
-cp ./config.example.py ${DIR}/config.py
+cp ./config.example.py ${DIR}/config.example.py
 cp ./README.md ${DIR}/
 cp ./requirements.txt ${DIR}/
 cp -r ./vircuum ${DIR}/vircuum
