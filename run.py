@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exchange", dest="exchange", type=str, required=True, help="cexio, btce, dummy")
 parser.add_argument("-t", "--threshold", dest="threshold", type=float, required=True, help="%% change required to act (0.01 = 1%%)")
 parser.add_argument("-u", "--use_balance", dest="use_balance", type=float, required=True, help="amount of balance to use, (1.0 = 100%%)")
+parser.add_argument("-r", "--retries", dest="retries", type=int, required=False, default=3, help="loop retries")
 parser.add_argument("-s", "--steps", dest="steps", type=float, required=True, help="split balance into amount of 'steps'")
 parser.add_argument("-y", "--autoconfirm", dest="autoconfirm", action="store_true", default=False, required=False, help="no longer require confirmation to place orders")
 parser.add_argument("-yy", "--autostart", dest="autostart", action="store_true", default=False, required=False, help="no longer require confirmation to start")
@@ -58,6 +59,7 @@ trader = Trader(tradeapi = tradeapi,
                 steps = args.steps,
                 autoconfirm = args.autoconfirm,
                 autostart = args.autostart,
+                retries = args.retries,
                 **extra)
 
 trader.run()
