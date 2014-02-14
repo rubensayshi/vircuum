@@ -116,7 +116,7 @@ class TradeAPI(object):
     def _parse_dt(self, dt):
         dt = str(dt).split('.')[0]
         dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S') # 2014-02-14 16:15:00
-        ts = time.mktime(dt.timetuple())
+        ts = time.mktime(dt.timetuple()) + 3600 # nasty way of correcting the fact that our server is GMT+1
 
         return int(ts)
 
