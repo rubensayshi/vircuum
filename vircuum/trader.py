@@ -164,6 +164,8 @@ class Trader(object):
 
                     if fails >= self.retries:
                         raise
+                    else:
+                        time.sleep(60)
         finally:
             try:
                 self.print_status(actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state before canceling buy orders ---^"])
