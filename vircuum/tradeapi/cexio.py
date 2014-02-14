@@ -10,9 +10,6 @@ simple_request_url = partial(simple_request_url, timeout = 20)
 
 
 class Order(object):
-    PRICE_FORMAT  = "{:15.8f}"
-    AMOUNT_FORMAT = "{:15.8f}"
-
     def __init__(self, id, time, type, price, amount, pending):
         self.id = id
         self.time = time
@@ -26,6 +23,9 @@ class Order(object):
 
 
 class TradeAPI(object):
+    PRICE_FORMAT  = "{:15.8f}"
+    AMOUNT_FORMAT = "{:15.8f}"
+    
     def __init__(self, api_key, api_secret, username, noncemod = 1, noncenum = 0, debug = False):
         self.api_key = api_key
         self.api_secret = api_secret
