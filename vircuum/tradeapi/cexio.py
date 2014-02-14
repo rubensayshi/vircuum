@@ -88,7 +88,10 @@ class TradeAPI(object):
         data = simple_request_url("https://cex.io/api/cancel_order/", data=urllib.urlencode(args))
         if self.debug: print data
 
-        return len(data) > 0 and 'error' not in data
+        if data != 'true':
+            raise Exception("Cancel Order failed: \n\n %s " % data)
+
+        return True
 
     def nonce(self):
         # nonce needs to be increasing, and this also ensures we don't break the 1 req/sec rate limit

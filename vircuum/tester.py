@@ -41,5 +41,5 @@ class Tester(Trader):
 
         print "\n\nopen_orders", self.tradeapi.open_orders()
 
-        print "\n\ncancel buy orders", self.retry(lambda: self.cancel_buy_orders(), tries = 01, wait = 1)
+        print "\n\ncancel buy orders", self.retry(lambda: self.cancel_buy_orders(), tries = 10, wait = 1)
         

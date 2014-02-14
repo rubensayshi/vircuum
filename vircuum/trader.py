@@ -317,7 +317,7 @@ class Trader(object):
             canceled = self.retry(lambda: self.tradeapi.cancel_order(id = buy_order.id))
 
             if canceled:
-                self.debug_action("canceled BUY order %s %s" % buy_order)
+                self.debug_action("canceled BUY order %s" % buy_order)
                 self.buy_orders.remove(buy_order)
                 self.balance += buy_order.amount * buy_order.price
             else:
