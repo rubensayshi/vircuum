@@ -10,6 +10,9 @@ simple_request_url = partial(simple_request_url, timeout = 20)
 
 
 class Order(object):
+    PRICE_FORMAT  = "{:15.8f}"
+    AMOUNT_FORMAT = "{:15.8f}"
+
     def __init__(self, id, time, type, price, amount, pending):
         self.id = id
         self.time = time
@@ -56,7 +59,8 @@ class TradeAPI(object):
         if not isinstance(data, list):
             raise Exception("API Request failed: \n\n %s" % data)
 
-        return [Order(int(row['id']), int(int(row['time']) / 1000), str(row['type']), float(row['price']), float(row['amount']), float(row['pending'])) for row in data]
+        return [Order(int(row['id']), int(int(row['time']) / 1000), str(row['type']), float(row['price']), float(row['amount']), float(row['pending']))
+                for row in data]
 
     def place_buy_order(self, amount, price):
         return self.place_order(type = 'buy', amount = amount, price = price)
@@ -84,7 +88,7 @@ class TradeAPI(object):
         data = simple_request_url("https://cex.io/api/cancel_order/", data=urllib.urlencode(args))
         if self.debug: print data
 
-        return len(data) > 0
+        return len(data) > 0 and 'error' not in data
 
     def nonce(self):
         # nonce needs to be increasing, and this also ensures we don't break the 1 req/sec rate limit

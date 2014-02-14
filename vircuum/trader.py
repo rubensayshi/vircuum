@@ -113,14 +113,14 @@ class Trader(object):
 
     def debug_action(self, msg):
         self.debug_actions.append(msg)
+        return msg
 
     def run(self):
         print "balance [%f], using [%f], perstep [%f]" % (self.real_balance, self.balance, self.spend_per_step)
         print "profit margin: [%f] = [%f%%]" % (self.threshold, self.threshold * 100)
 
         if not self.autostart:
-            print "run?"
-            self.confirm()
+            self.confirm("run?")
         else:
             print "sleeping 5 seconds before starting ..."
             time.sleep(5)
@@ -165,12 +165,12 @@ class Trader(object):
                     if fails >= self.retries:
                         raise
                     else:
-                        time.sleep(60)
+                        pass # time.sleep(60)
         finally:
             try:
                 self.print_status(actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state before canceling buy orders ---^"])
 
-                self.retry(lambda: self.cancel_buy_orders())
+                self.retry(lambda: self.cancel_buy_orders(), wait = 10)
 
                 self.print_status(actionsbefore = self.debug_actions, actionsafter = ["FINALLY, state after canceling buy orders ---^"])
                 self.finish()
@@ -179,14 +179,18 @@ class Trader(object):
                 print e
 
 
+    def price_format(self, price):
+        return float(self.tradeapi.PRICE_FORMAT.format(price))
 
+    def amount_format(self, amount):
+        return float(self.tradeapi.AMOUNT_FORMAT.format(amount))
 
     def get_price(self):
         (bid, ask, ) = self.retry(lambda: self.tradeapi.ticker())
         return (bid, ask, )
 
     def retry(self, fn, tries = 5, wait = 1.0):
-        for retry in range(tries):
+        for retry in range(max(tries, 1)):
             t = time.time()
             try:
                 return fn()
@@ -202,9 +206,12 @@ class Trader(object):
             raise
             return
 
-    def confirm(self, allow_autoconfirm = False):
+    def confirm(self, msg = None, allow_autoconfirm = False):
         if self.autoconfirm and allow_autoconfirm:
             return True
+
+        if msg:
+            print msg
 
         while not self.do_confirm():
             pass
@@ -234,18 +241,18 @@ class Trader(object):
         price = self.ask
 
         while self.balance >= self.spend_per_step:
-            price  = float("{:3.8f}".format(price * (1 - self.threshold)))
-            amount = self.spend_per_step / price 
+            price  = self.price_format(price * (1 - self.threshold))
+            amount = self.amount_format(self.spend_per_step / price) 
             
-            self.debug_action("placing BUY order for [%f] @ [%f]" % (amount, price))
-            self.confirm(allow_autoconfirm = True)
+            self.confirm(self.debug_action("placing BUY order for [%f] @ [%f]" % (amount, price)), 
+                         allow_autoconfirm = True)
 
             buy_order = self.retry(lambda: self.tradeapi.place_buy_order(price = price, amount = amount))
             self.debug_action("placed BUY order %s" % buy_order)
 
             self.buy_orders.append(buy_order)
 
-            self.balance -= (price * amount)
+            self.balance -= self.price_format(price * amount)
 
     def check_current_buy_orders(self, open_orders = None):
         if not open_orders:
@@ -265,10 +272,10 @@ class Trader(object):
 
     def place_sell_orders(self):
         for bought_order in list(self.bought_orders):
-            price = float("{:3.8f}".format(bought_order.price / (1 - self.threshold)))
+            price = self.price_format(bought_order.price / (1 - self.threshold))
 
-            self.debug_action("placing SELL order for [%f] @ [%f]" % (bought_order.amount, price))
-            self.confirm(allow_autoconfirm = True)
+            self.confirm(self.debug_action("placing SELL order for [%f] @ [%f]" % (bought_order.amount, price)), 
+                         allow_autoconfirm = True)
 
             sell_order = self.retry(lambda: self.tradeapi.place_sell_order(price = price, amount = bought_order.amount))
             self.debug_action("placed SELL order %s" % sell_order)
@@ -308,10 +315,16 @@ class Trader(object):
 
             self.debug_action("canceling BUY order for [%f] @ [%f]" % (buy_order.amount, buy_order.price))
             canceled = self.retry(lambda: self.tradeapi.cancel_order(id = buy_order.id))
-            self.debug_action("canceled BUY order %s" % buy_order)
 
-            self.buy_orders.remove(buy_order)
-            self.balance += buy_order.amount * buy_order.price
+            if canceled:
+                self.debug_action("canceled BUY order %s %s" % buy_order)
+                self.buy_orders.remove(buy_order)
+                self.balance += buy_order.amount * buy_order.price
+            else:
+                self.debug_action("FAILED to cancel BUY order %s" % buy_order)
+
+        if len(self.buy_orders) > 0:
+            raise Exception("Failed to cancel all buy orders")
 
     def check_reset(self):
         if len(self.sell_orders) > 0:
@@ -320,7 +333,7 @@ class Trader(object):
         # if our newest buy order has surpassed our threshold then we should reset
         if int(time.time() - Trader.RESET_THRESHOLD) > max([buy_order.time for buy_order in self.buy_orders]):
             self.debug_action("resetting BUY orders!")
-            self.cancel_buy_orders()
+            self.retry(lambda: self.cancel_buy_orders(), wait = 10)
             self.debug_action("reset BUY orders!")
 
     def print_status(self, actionsbefore, actionsafter):

@@ -16,7 +16,8 @@ class Order(object):
 
 
 class TradeAPI(object):
-    TIME_PER_LOOP = 1
+    PRICE_FORMAT  = "{:15.2f}"
+    AMOUNT_FORMAT = "{:15.8f}"
 
     def __init__(self, noncemod = 1, noncenum = 0, *args, **kwargs):
         self.price = 500
@@ -46,7 +47,6 @@ class TradeAPI(object):
         return self.place_order(type = 'buy', amount = amount, price = price)
 
     def place_sell_order(self, amount, price):
-        raise Exception("fail")
         return self.place_order(type = 'sell', amount = amount, price = price)
     
     def place_order(self, type, amount, price):

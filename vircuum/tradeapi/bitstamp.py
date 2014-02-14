@@ -1,4 +1,5 @@
 from functools import partial
+import datetime
 import hashlib
 import hmac
 import json
@@ -22,6 +23,9 @@ class Order(object):
 
 
 class TradeAPI(object):
+    PRICE_FORMAT  = "{:15.2f}"
+    AMOUNT_FORMAT = "{:15.8f}"
+
     def __init__(self, api_key, api_secret, clientid, noncemod = 1, noncenum = 0, debug = False):
         self.api_key = api_key
         self.api_secret = api_secret
@@ -48,14 +52,15 @@ class TradeAPI(object):
 
     def open_orders(self):
         args = self.auth_args()
-        data = simple_request_url("https://www.bitstamp.net/api/open_orders/GHS/BTC", data=urllib.urlencode(args))
+        data = simple_request_url("https://www.bitstamp.net/api/open_orders/", data=urllib.urlencode(args))
         if self.debug: print data
         data = json.loads(data)
 
         if not isinstance(data, list):
             raise Exception("API Request failed: \n\n %s" % data)
 
-        return [Order(int(row['id']), int(int(row['time']) / 1000), str(row['type']), float(row['price']), float(row['amount'])) for row in data]
+        return [Order(int(row['id']), self._parse_dt(row['datetime']), str(row['type']), float(row['price']), float(row['amount'])) 
+                for row in data]
 
     def place_buy_order(self, amount, price):
         return self.place_order(type = 'buy', amount = amount, price = price)
@@ -67,14 +72,14 @@ class TradeAPI(object):
         args = dict(amount = amount, price = price)
         if self.debug: print "place_order", args
         args.update(self.auth_args())
-        data = simple_request_url("https://www.bitstamp.net/api/%s" % type, data=urllib.urlencode(args))
+        data = simple_request_url("https://www.bitstamp.net/api/%s/" % type, data=urllib.urlencode(args))
         if self.debug: print data
         data = json.loads(data)
 
         if not isinstance(data, dict) or 'id' not in data:
             raise Exception("API Request failed: \n\n %s" % data)
 
-        return Order(int(data['id']), int(int(data['time']) / 1000), str(data['type']), float(data['price']), float(data['amount']))
+        return Order(int(data['id']), self._parse_dt(data['datetime']), str(data['type']), float(data['price']), float(data['amount']))
 
     def cancel_order(self, id):
         args = dict(id = id)
@@ -83,7 +88,7 @@ class TradeAPI(object):
         data = simple_request_url("https://www.bitstamp.net/api/cancel_order/", data=urllib.urlencode(args))
         if self.debug: print data
 
-        return len(data) > 0
+        return len(data) > 0 and 'error' not in data
 
     def nonce(self):
         # nonce needs to be increasing, and this also ensures we don't break the 1 req/sec rate limit
@@ -104,3 +109,11 @@ class TradeAPI(object):
         signature = hmac.new(self.api_secret, msg=message, digestmod=hashlib.sha256).hexdigest().upper()
 
         return dict(key = self.api_key, signature = signature, nonce = nonce)
+
+    def _parse_dt(self, dt):
+        dt = str(dt).split('.')[0]
+        dt = datetime.datetime.strptime(dt, '%Y-%m-%d %H:%M:%S') # 2014-02-14 16:15:00
+        ts = time.mktime(dt.timetuple())
+
+        return int(ts)
+

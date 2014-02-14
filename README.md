@@ -14,4 +14,7 @@ EXAMPLES:
 `./run.py -e cexio -t 0.003 -u 0.5 -s 5 -y -yy > tmp/cexio.log`
 
  - cex.io, using 0.04 BTC, spread across 7 steps, using 0.3% threshold for buying and profit (0.003)
-`./run.py -e cexio -t 0.003 -ue 0.04 -s 7 -y -yy`
+`./run.py -e bitstamp -t 0.003 -ue 0.04 -s 7 -y -yy`
+
+ - bitstamp, using $50, spread across 7 steps, using 1% threshold for buying and profit (0.01)
+`./run.py -e bitstamp -t 0.01 -ue 50 -s 7 -y -yy`
