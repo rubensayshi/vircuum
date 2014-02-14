@@ -76,7 +76,7 @@ class Trader(object):
     RESET_THRESHOLD = 15 * 60
     SLEEP_PER_LOOP = 0
 
-    def __init__(self, tradeapi, threshold, use_balance, use_balance_exact, steps, autoconfirm, autostart, retries, balance = None):
+    def __init__(self, tradeapi, threshold, use_balance, use_balance_exact, steps, autoconfirm, autostart, retries, sessionmaker, balance = None):
         self.tradeapi = tradeapi
         self.threshold = threshold
         self.use_balance = use_balance
@@ -85,6 +85,7 @@ class Trader(object):
         self.autoconfirm = autoconfirm
         self.autostart = autostart
         self.retries = retries
+        self.sessionmaker = sessionmaker
 
         self.bid = 0
         self.ask = 0
@@ -110,6 +111,17 @@ class Trader(object):
         self.product = 0.0
         self.profit = 0.0
         self.debug_actions = []
+
+    @property
+    def session(self):
+        if self._session is None:
+            sesion._session = self.sessionmaker()
+
+        return self._session
+
+    @session.setter
+    def session(self, session):
+        self._session = session
 
     def debug_action(self, msg):
         self.debug_actions.append(msg)

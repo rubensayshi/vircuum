@@ -3,6 +3,9 @@ import sys, os
 from vircuum.trader import Trader
 from vircuum.tester import Tester
 import argparse
+from sqlalchemy import create_engine
+from vircuum.trader import Trader
+from vircuum.models import Base
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
@@ -19,6 +22,7 @@ parser.add_argument("-v", "--debug", dest="debug", action="store_true", default=
 parser.add_argument("--test", dest="test", action="store_true", default=False, required=False, help="test actions")
 parser.add_argument("-nn", "--noncenum", dest="noncenum", type=int, default=0, required=False, help="noncenum for running multiple scripts async")
 parser.add_argument("-n", "--noncemod", dest="noncemod", type=int, default=1, required=False, help="noncemod for running multiple scripts async")
+parser.add_argument("--sql", dest="sql", type=str, default=None, required=False, help="SQL connection to use for state")
 
 args = parser.parse_args()
 
@@ -29,6 +33,15 @@ try:
     from config import config
 except:
     raise Exception("You need to copy `config.example.py` to `config.py` and fill in your data")
+
+if args.sql:
+    engine = create_engine(args.sql, echo=False)
+else:
+    engine = create_engine('sqlite:///:memory:', echo=True)
+    Base.metadata.create_all(engine)
+
+from sqlalchemy.orm import sessionmaker
+Session = sessionmaker(bind=engine)
 
 extra = {}
 
@@ -68,6 +81,7 @@ trader = cls(tradeapi = tradeapi,
                 autoconfirm = args.autoconfirm,
                 autostart = args.autostart,
                 retries = args.retries,
+                sessionmaker = sessionmaker,
                 **extra)
 
 trader.run()
