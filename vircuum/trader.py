@@ -7,8 +7,8 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 # {col1head:<{col1len}}
 # {myfloat:15.8f}
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#|  TIME:   YYYY-MM-DD HH:II:SS  |  PROFIT:  111475.49502564 (9999999)   |
-#|  START:  111475.49502564      |  BALANCE: 111475.49502564             |
+#|  TIME:   YYYY-MM-DD HH:II:SS  |  PROFIT:  1475.495025 (9999999)       |
+#|  START:  1475.495025          |  BALANCE: 1475.495025                 |
 #=========================================================================
 #|  BID:  1475.495025 | 10min MIN: 1475.495025 | 30min MIN: 1475.495025  |
 #|  SELL: 1475.495025 | 10min MAX: 1475.495025 | 30min MAX: 1475.495025  |
@@ -31,17 +31,17 @@ Order = namedtuple("Order", ["price", "amount", "spent", "data"])
 #|       amount          sum         |       amount          sum         |
 #|  1199.007712  1199.007712         |  1199.007712  1199.007712         |
 #=========================================================================
-#|  PROFIT CUR:  111475.49502564     |  1475.495025%                     |
-#|  PROFIT LOW:  111475.49502564     |  1475.495025%                     |
-#|  PROFIT MID:  111475.49502564     |  1475.495025%                     |
-#|  PROFIT HIGH: 111475.49502564     |  1475.495025%                     |
+#|  PROFIT CUR:  1475.495025         |  1475.495025%                     |
+#|  PROFIT LOW:  1475.495025         |  1475.495025%                     |
+#|  PROFIT MID:  1475.495025         |  1475.495025%                     |
+#|  PROFIT HIGH: 1475.495025         |  1475.495025%                     |
 #=========================================================================
 #| loop took [3], sleeping[1.072918]
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ACTION_TEMPLATE = """| {action}"""
 
 SHORT_TEMPLATE = "{:11.6f}"
-LONG_TEMPLATE = "{:15.8f}"
+LONG_TEMPLATE = SHORT_TEMPLATE
 BALANCE_TEMPLATE = LONG_TEMPLATE
 PRICE_TEMPLATE = SHORT_TEMPLATE
 AMOUNT_TEMPLATE = SHORT_TEMPLATE
@@ -49,8 +49,8 @@ ORDER_TEMPLATE = """{amount:>11}  {price:>11}  {age:>4}{ageunit:>1}"""
 
 STATUS_TEMPLATE = """
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-|  TIME:   {dt:>19}  |  PROFIT:  {cur_profit:>15} ({sold_cnt:>7})   |
-|  START:  {start_balance:>15}      |  BALANCE: {balance:>15}             |
+|  TIME:   {dt:>19}  |  PROFIT:  {cur_profit:>11} ({sold_cnt:>7})       |
+|  START:  {start_balance:>11}          |  BALANCE: {balance:>11}                 |
 =========================================================================
 |  BID:  {bid:>11} | 10min MIN:    0.000000 | 30min MIN:    0.000000  |
 |  SELL: {ask:>11} | 10min MAX:    0.000000 | 30min MAX:    0.000000  |
@@ -64,9 +64,9 @@ STATUS_TEMPLATE = """
 |       amount          sum         |       amount          sum         |
 |  {buy_amount:>11}  {buy_sum:>11}         |  {sell_amount:>11}  {sell_sum:>11}         |
 =========================================================================
-|  PROFIT CUR:  {cur_profit:>15}     |  {cur_profit_p:>11}%                     |
-|  PROFIT LOW:  {low_profit:>15}     |  {low_profit_p:>11}%                     |
-|  PROFIT HIGH: {high_profit:>15}     |  {high_profit_p:>11}%                     |
+|  PROFIT CUR:  {cur_profit:>11}         |  {cur_profit_p:>11}%                     |
+|  PROFIT LOW:  {low_profit:>11}         |  {low_profit_p:>11}%                     |
+|  PROFIT HIGH: {high_profit:>11}         |  {high_profit_p:>11}%                     |
 =========================================================================
 {actionsafter}
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

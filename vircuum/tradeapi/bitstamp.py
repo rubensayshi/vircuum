@@ -23,8 +23,8 @@ class Order(object):
 
 
 class TradeAPI(object):
-    PRICE_FORMAT  = "{:15.2f}"
-    AMOUNT_FORMAT = "{:15.8f}"
+    PRICE_FORMAT  = "{:11.2f}"
+    AMOUNT_FORMAT = "{:11.8f}"
 
     def __init__(self, api_key, api_secret, clientid, noncemod = 1, noncenum = 0, debug = False):
         self.api_key = api_key

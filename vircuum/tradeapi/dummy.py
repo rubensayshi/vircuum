@@ -16,8 +16,8 @@ class Order(object):
 
 
 class TradeAPI(object):
-    PRICE_FORMAT  = "{:15.2f}"
-    AMOUNT_FORMAT = "{:15.8f}"
+    PRICE_FORMAT  = "{:11.2f}"
+    AMOUNT_FORMAT = "{:11.8f}"
 
     def __init__(self, noncemod = 1, noncenum = 0, *args, **kwargs):
         self.price = 500
