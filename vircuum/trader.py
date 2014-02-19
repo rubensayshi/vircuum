@@ -115,7 +115,7 @@ class Trader(object):
     @property
     def session(self):
         if self._session is None:
-            sesion._session = self.sessionmaker()
+            self._session = self.sessionmaker()
 
         return self._session
 
