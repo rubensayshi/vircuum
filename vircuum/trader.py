@@ -1,5 +1,6 @@
 from collections import namedtuple
 import time
+import copy
 from datetime import datetime
 
 Order = namedtuple("Order", ["price", "amount", "spent", "data"])
@@ -71,6 +72,349 @@ STATUS_TEMPLATE = """
 {actionsafter}
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 """
+
+
+class ActionPlan(object):
+    def run(self):
+        raise Exception("not implemented")
+
+
+class Plan(object):
+    def __init__(self, parent = None):
+        self.parent  = parent
+
+        self.balance = []
+        self.children = []
+        self.conditions = []
+
+        self._price = None
+
+    @property
+    def price(self):
+        return self._price or (self.parent.price if self.parent else None)
+
+    @price.setter
+    def price(self, price):
+        self._price = price
+
+    def add_condition(self, condition):
+        self.conditions.append(condition)
+        return condition
+
+    def add_child(self, child):
+        self.children.append(child)
+        child.parent = self
+        return child
+
+    def validate(self):
+        return all([bool(condition) for condition in self.conditions])
+
+    def run(self):
+        if self.validate():
+            self.execute()
+
+    def execute(self):
+        for child in self.children:
+            child.run()
+
+    def requested_balance(self):
+        grp = {}
+
+        for child in self.children:
+            for currency, weight in child.requested_balance().items():
+                grp.setdefault(currency, 0.0)
+                grp[currency] += float(weight)
+
+        return grp
+
+    def assign_balance(self, assigned_balance):
+        self.assigned_balance = assigned_balance
+        self.balance = copy.deepcopy(self.assigned_balance)
+        
+        requested_balance = self.requested_balance()
+
+        for child in self.children:
+            for currency, weight in child.requested_balance().items():
+                factor  = weight / requested_balance[currency]
+                balance = factor * self.assigned_balance[currency].value
+                balance = currency.VALUE(balance)
+
+                self.balance[currency] -= balance
+                child.assign_balance({currency : balance})
+
+
+class MasterPlan(Plan):
+    def __init__(self, assigned_balance = None):
+        super(MasterPlan, self).__init__(self)
+        self.assigned_balance = dict((balance.CURRENCY, balance) for balance in assigned_balance)
+        self.initialized = False
+
+    def init(self, price):
+        if self.initialized:
+            return False
+
+        self.assign_balance(self.assigned_balance)
+        self._price = price
+
+    def run(self, price):
+        self.init(price)
+
+        super(MasterPlan, self).run()
+
+
+class Action(object):
+    def __init__(self, actionA, actionB, parent = None):
+        self.actionA = actionA
+        self.actionB = actionB
+        self.parent  = parent
+
+        self.actionA.action = self
+        self.actionB.action = self
+
+        self.assigned_balance = {}
+        self._price = None
+
+    @property
+    def price(self):
+        return self._price or (self.parent.price if self.parent else None)
+
+    @price.setter
+    def price(self, price):
+        self._price = price
+
+    def requested_balance(self):
+        return {self.actionA.currency() : 1.0}
+
+    def assign_balance(self, assigned_balance):
+        self.assigned_balance = assigned_balance
+
+    def run(self):
+        return self.execute()
+
+    def execute(self):
+        # fixate the price
+        if not self._price:
+            self._price = self.price
+
+        if self.actionA.execute() and self.actionB.execute():
+            self.actionB.reset()
+            self.actionA.reset()
+
+            return self.execute()
+
+
+class Currency(object):
+    NAME = None
+
+    @classmethod
+    def round(cls, value):
+        return float(value)
+
+
+class CurrencyV(object):
+    CURRENCY = None
+    def __init__(self, value):
+        self.value = self.round(value)
+
+    def round(self, value):
+        return self.CURRENCY.round(value)
+
+    def __add__(self, other):
+        return self.CURRENCY.VALUE(other.value + self.value)
+
+    def __sub__(self, other):
+        return self.CURRENCY.VALUE(other.value - self.value)
+
+    def __mul__(self, other):
+        return self.CURRENCY.VALUE(other.value * self.value)
+
+    def __div__(self, other):
+        return self.CURRENCY.VALUE(other.value / self.value)
+
+    def __repr__(self):
+        return str(self.value)
+
+
+class CurrencyP(object):
+    CURRENCY = None
+    def __init__(self, percentage):
+        self.percentage = percentage
+
+
+class GHS(Currency):
+    NAME = 'GHS'
+
+    @classmethod
+    def VALUE(cls, value):
+        return GHSv(value)
+
+
+class BTC(Currency):
+    NAME = 'BTC'
+
+    @classmethod
+    def VALUE(cls, value):
+        return BTCv(value)
+
+
+class GHSv(CurrencyV):
+    CURRENCY = GHS
+
+
+class BTCv(CurrencyV):
+    CURRENCY = BTC
+
+
+class GHSp(CurrencyP):
+    CURRENCY = GHS
+
+    def __repr__(self):
+        return repr(self.CURRENCY)
+
+
+class BTCp(CurrencyP):
+    CURRENCY = BTC
+
+    def __repr__(self):
+        return repr(self.CURRENCY)
+
+
+class Task(object):
+    def __init__(self):
+        self.action = None
+        self._price = None
+
+    def execute(self):
+        return False
+
+    def reset(self):
+        pass
+
+    def currency(self):
+        raise Exception("not implemented")
+
+    @property
+    def price(self):
+        return self._price or self.action.price
+
+    @price.setter
+    def price(self, price):
+        self._price = price
+
+    def place_order(self, type, price, amount):
+        print "place order [%s] [%s] @ [%s]" % (type, amount, price)
+
+
+class Buy(Task):
+    def __init__(self, buy, curr):
+        super(Buy, self).__init__()
+
+        self.buy = buy
+        self.curr = curr
+        self.buy_order = None
+
+    def currency(self):
+        return self.curr
+
+    def execute(self):
+        if not self.buy_order:
+            self.place_buy_order()
+            return False
+        elif not self.buy_order.bought:
+            return False
+        else:
+            return True
+
+    def reset(self):
+        if not self.buy_order.bought:
+            self.cancel_buy_order()
+
+        self.buy_order = None
+
+        return True
+
+    def cancel_buy_order(self):
+        pass
+
+    def place_buy_order(self):
+        price  = self.price * (1 - self.buy.percentage)
+        amount = self.action.assigned_balance[self.currency()].value / price
+        self.place_order('buy', price, amount)
+
+
+class Sell(Task):
+    def __init__(self, sell, curr):
+        super(Sell, self).__init__()
+
+        self.sell = sell
+        self.curr = curr
+        self.sell_order = None
+
+    def currency(self):
+        return self.curr
+
+    def execute(self):
+        if not self.sell_order:
+            self.place_sell_order()
+            return False
+        elif not self.sell_order.sold:
+            return False
+        else:
+            return True
+
+    def reset(self):
+        if not self.sell_order.sold:
+            return False
+
+        self.sell_order = None
+
+        return True
+
+    def place_sell_order(self):
+        price = self.price * (1 + self.sell.percentage)
+        amount = price / self.action.assigned_balance[self.currency()]
+        self.place_order('sell', price, amount)
+
+
+class Condition(object):
+    pass
+
+
+class UpTrend(Condition):
+    def __nonzero__(self):
+        return True
+
+
+class DownTrend(Condition):
+    def __nonzero__(self):
+        return False
+
+
+masterplan = MasterPlan(assigned_balance = [BTCv(2), GHSv(5)])
+
+
+uptrendplan = masterplan.add_child(Plan())
+uptrendplan.add_condition(UpTrend())
+
+uptrendplan.add_child(Action(Buy(GHSp(0.01), BTC), Sell(BTCp(0.01), GHS)))
+uptrendplan.add_child(Action(Buy(GHSp(0.02), BTC), Sell(BTCp(0.01), GHS)))
+uptrendplan.add_child(Action(Buy(GHSp(0.05), BTC), Sell(BTCp(0.03), GHS)))
+
+if False:
+    downtrendplan = masterplan.add_child(Plan())
+    downtrendplan.add_condition(DownTrend())
+
+    downtrendplan.add_child(Action(Sell(GHSp(0.01), BTC), Buy(BTCp(0.01), GHS)))
+    downtrendplan.add_child(Action(Sell(GHSp(0.02), BTC), Buy(BTCp(0.01), GHS)))
+    downtrendplan.add_child(Action(Sell(GHSp(0.05), BTC), Buy(BTCp(0.03), GHS)))
+
+
+masterplan.run(price = 0.3)
+
+
+while True:
+    import time
+    time.sleep(10)
 
 class Trader(object):
     RESET_THRESHOLD = 15 * 60
