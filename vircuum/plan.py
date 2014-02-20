@@ -138,6 +138,9 @@ class Action(object):
     def price(self, price):
         self._price = price
 
+    def fixate_price(self):
+        self.price = self.price
+
     @property
     def trader(self):
         return self.parent.trader
@@ -152,15 +155,15 @@ class Action(object):
         return self.execute()
 
     def execute(self):
-        # fixate the price
-        if not self._price:
-            self._price = self.price
+        self.fixate_price()
 
-        if self.actionA.execute() and self.actionB.execute():
-            self.actionB.reset()
-            self.actionA.reset()
+        if self.actionA.execute():
+            self.actionB.price = self.actionA.price
+            if self.actionB.execute():
+                self.actionB.reset()
+                self.actionA.reset()
 
-            return self.execute()
+                return self.execute()
 
 
 class Task(object):
@@ -173,10 +176,13 @@ class Task(object):
         return self.action.trader
 
     def execute(self):
+        self.fixate_price()
         return False
 
     def reset(self):
-        pass
+        self._price = None
+
+        return True
 
     def currency(self):
         raise Exception("not implemented")
@@ -188,6 +194,9 @@ class Task(object):
     @price.setter
     def price(self, price):
         self._price = price
+
+    def fixate_price(self):
+        self.price = self.price
 
 
 class Buy(Task):
@@ -216,16 +225,17 @@ class Buy(Task):
 
     def reset(self):
         self.buy_order = None
-        return True
+
+        return super(Buy, self).reset()
 
     def cancel_buy_order(self):
         raise Exception("not implemented")
 
     def place_buy_order(self):
-        price  = self.price * (1 - self.buy.percentage)
+        price  = self.price = self.price * (1 - self.buy.percentage)
         amount = self.action.balance[self.currency()] / price
 
-        print "place_buy_order", self.price, price, amount
+        print "place_buy_order", self.price, self.action.balance[self.currency()], amount
 
         self.buy_order = self.trader.place_buy_order(amount = amount, price = price)
 
@@ -249,7 +259,7 @@ class Sell(Task):
             return False
         elif self.sell_order.status == 1:
             self.sell_order.status = 2
-            self.action.balance[self.sell.CURRENCY] += self.sell.CURRENCY.VALUE(self.sell_order.amount)
+            self.action.balance[self.sell.CURRENCY] += self.sell.CURRENCY.VALUE(self.sell_order.price * self.sell_order.amount)
             return True
         elif self.sell_order.status >= 2:
             return True
@@ -258,17 +268,18 @@ class Sell(Task):
 
     def reset(self):
         self.sell_order = None
-        return True
+
+        return super(Sell, self).reset()
 
     def place_sell_order(self):
-        price = self.price * (1 + self.sell.percentage)
-        amount = price / self.action.balance[self.currency()]
+        price = self.price = self.price * (1 + self.sell.percentage)
+        amount = self.action.balance[self.currency()]
 
-        print "place_sell_order", self.price, price, amount
+        print "place_sell_order", self.price, self.action.balance[self.currency()], amount
 
         self.sell_order = self.trader.place_sell_order(amount = amount, price = price)
 
-        self.action.balance[self.curr] -= self.curr.VALUE(self.sell_order.price * self.sell_order.amount)
+        self.action.balance[self.curr] -= self.sell_order.amount
 
 
 class Condition(object):

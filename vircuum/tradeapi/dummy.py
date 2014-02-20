@@ -108,11 +108,11 @@ class TradeAPI(object):
                 dir = self.dummy_loop_dir
 
             if dir == 0:
-                self.price *= (1 + (random.randint(-2, 2)/100.0))
+                self.price *= (1 + (random.randint(-20, 20)/1000.0))
             elif dir > 0:
-                self.price *= (1 + (random.randint(0, 2)/100.0))
+                self.price *= (1 + (random.randint(0, 20)/1000.0))
             elif dir < 0:
-                self.price *= (1 + (random.randint(-2, 0)/100.0))
+                self.price *= (1 + (random.randint(-20, 0)/1000.0))
 
             return self.price
 
