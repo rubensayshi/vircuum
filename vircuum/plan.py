@@ -1,5 +1,7 @@
 import copy
 
+from vircuum.currency import BTC, GHS
+
 
 class ActionPlan(object):
     def run(self):
@@ -76,7 +78,7 @@ class Plan(object):
                     balance = currency.VALUE(0)
                 else:
                     factor  = weight / total
-                    balance = factor * self.assigned_balance[currency].value
+                    balance = self.assigned_balance[currency] * factor
                     balance = currency.VALUE(balance)
                     self.balance[currency] -= balance
 
@@ -125,7 +127,7 @@ class Action(object):
         self.actionA.action = self
         self.actionB.action = self
 
-        self.assigned_balance = {}
+        self.balance = {}
         self._price = None
 
     @property
@@ -144,7 +146,7 @@ class Action(object):
         return {self.actionA.currency() : 1.0}
 
     def assign_balance(self, assigned_balance):
-        self.assigned_balance = assigned_balance
+        self.balance = assigned_balance
 
     def run(self):
         return self.execute()
@@ -159,82 +161,6 @@ class Action(object):
             self.actionA.reset()
 
             return self.execute()
-
-
-class Currency(object):
-    NAME = None
-
-    @classmethod
-    def round(cls, value):
-        return float(value)
-
-
-class CurrencyV(object):
-    CURRENCY = None
-    def __init__(self, value):
-        self.value = self.round(value)
-
-    def round(self, value):
-        return self.CURRENCY.round(value)
-
-    def __add__(self, other):
-        return self.CURRENCY.VALUE(other.value + self.value)
-
-    def __sub__(self, other):
-        return self.CURRENCY.VALUE(other.value - self.value)
-
-    def __mul__(self, other):
-        return self.CURRENCY.VALUE(other.value * self.value)
-
-    def __div__(self, other):
-        return self.CURRENCY.VALUE(other.value / self.value)
-
-    def __repr__(self):
-        return str(self.value)
-
-
-class CurrencyP(object):
-    CURRENCY = None
-    def __init__(self, percentage):
-        self.percentage = percentage
-
-
-class GHS(Currency):
-    NAME = 'GHS'
-
-    @classmethod
-    def VALUE(cls, value):
-        return GHSv(value)
-
-
-class BTC(Currency):
-    NAME = 'BTC'
-
-    @classmethod
-    def VALUE(cls, value):
-        return BTCv(value)
-
-
-class GHSv(CurrencyV):
-    CURRENCY = GHS
-
-
-class BTCv(CurrencyV):
-    CURRENCY = BTC
-
-
-class GHSp(CurrencyP):
-    CURRENCY = GHS
-
-    def __repr__(self):
-        return repr(self.CURRENCY)
-
-
-class BTCp(CurrencyP):
-    CURRENCY = BTC
-
-    def __repr__(self):
-        return repr(self.CURRENCY)
 
 
 class Task(object):
@@ -263,9 +189,6 @@ class Task(object):
     def price(self, price):
         self._price = price
 
-    def place_order(self, type, price, amount):
-        print "place order [%s] [%s] @ [%s]" % (type, amount, price)
-
 
 class Buy(Task):
     def __init__(self, buy, curr):
@@ -279,25 +202,20 @@ class Buy(Task):
         return self.curr
 
     def execute(self):
-        print self, "execute", self.buy_order
         if not self.buy_order:
             self.place_buy_order()
             return False
-        elif not self.buy_order.status == 1:
-            return False
-        elif not self.buy_order.status == 2:
+        elif self.buy_order.status == 1:
             self.buy_order.status = 2
-            self.action.assigned_balance[self.buy.CURRENCY] += self.buy.CURRENCY.VALUE(self.buy_order.amount)
+            self.action.balance[self.buy.CURRENCY] += self.buy.CURRENCY.VALUE(self.buy_order.amount)
+            return True
+        elif self.buy_order.status >= 2:
             return True
         else:
-            return True
+            return False
 
     def reset(self):
-        if not self.buy_order.status == 1:
-            self.cancel_buy_order()
-
         self.buy_order = None
-
         return True
 
     def cancel_buy_order(self):
@@ -305,13 +223,13 @@ class Buy(Task):
 
     def place_buy_order(self):
         price  = self.price * (1 - self.buy.percentage)
-        amount = self.action.assigned_balance[self.currency()].value / price
+        amount = self.action.balance[self.currency()] / price
 
         print "place_buy_order", self.price, price, amount
 
         self.buy_order = self.trader.place_buy_order(amount = amount, price = price)
 
-        self.action.assigned_balance[self.curr] -= self.curr.VALUE(self.buy_order.price * self.buy_order.amount)
+        self.action.balance[self.curr] -= self.curr.VALUE(self.buy_order.price * self.buy_order.amount)
 
 
 class Sell(Task):
@@ -326,35 +244,31 @@ class Sell(Task):
         return self.curr
 
     def execute(self):
-        print self, "execute", self.sell_order
         if not self.sell_order:
             self.place_sell_order()
             return False
-        elif not self.sell_order.status == 1:
-            return False
-        elif not self.sell_order.status == 2:
+        elif self.sell_order.status == 1:
             self.sell_order.status = 2
-            self.action.assigned_balance[self.sell.CURRENCY] += self.sell.CURRENCY.VALUE(self.sell_order.amount)
+            self.action.balance[self.sell.CURRENCY] += self.sell.CURRENCY.VALUE(self.sell_order.amount)
+            return True
+        elif self.sell_order.status >= 2:
             return True
         else:
-            return True
-
-    def reset(self):
-        if not self.sell_order.status == 1:
             return False
 
+    def reset(self):
         self.sell_order = None
-
         return True
 
     def place_sell_order(self):
-        print "place_sell_order"
         price = self.price * (1 + self.sell.percentage)
-        amount = price / self.action.assigned_balance[self.currency()].value
+        amount = price / self.action.balance[self.currency()]
+
+        print "place_sell_order", self.price, price, amount
 
         self.sell_order = self.trader.place_sell_order(amount = amount, price = price)
 
-        self.action.assigned_balance[self.curr] -= self.curr.VALUE(self.sell_order.price * self.sell_order.amount)
+        self.action.balance[self.curr] -= self.curr.VALUE(self.sell_order.price * self.sell_order.amount)
 
 
 class Condition(object):

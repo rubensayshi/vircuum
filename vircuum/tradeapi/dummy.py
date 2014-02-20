@@ -2,6 +2,9 @@ from vircuum.tradeapi.common import isnumber
 import time
 import random
 
+from vircuum.currency import BTC, GHS
+
+
 class Order(object):
     def __init__(self, id, time, type, price, amount, pending):
         self.id = id
@@ -17,14 +20,11 @@ class Order(object):
 
 
 class TradeAPI(object):
-    PRICE_FORMAT  = "{:11.2f}"
-    AMOUNT_FORMAT = "{:11.8f}"
-
     def __init__(self, noncemod = 1, noncenum = 0, *args, **kwargs):
-        self.price = 500
+        self.price = BTC.VALUE(0.04)
         self.dummy_loop = 0
         self.dummy_loop_dir = 0
-        self._balance = 250
+        self._balance = BTC.VALUE(1)
         self.orders = []
         self.prev_nonce = None
         self.noncenum = noncenum
@@ -76,6 +76,7 @@ class TradeAPI(object):
 
     def process(self):
         for order in list(self.orders):
+            print self.price, order
             if order.type == 'buy':
                 if self.price <= order.price:
                     self.orders.remove(order)
@@ -107,19 +108,21 @@ class TradeAPI(object):
                 dir = self.dummy_loop_dir
 
             if dir == 0:
-                self.price += float(random.randint(-50, 50)) * 1
+                self.price *= (1 + (random.randint(-2, 2)/100.0))
             elif dir > 0:
-                self.price += float(random.randint(0, 100)) * 1
+                self.price *= (1 + (random.randint(0, 2)/100.0))
             elif dir < 0:
-                self.price += float(random.randint(-100, 0)) * 1
+                self.price *= (1 + (random.randint(-2, 0)/100.0))
 
             return self.price
 
         try:
             while True:
+                self.price = float(self.price)
                 if self.dummy_loop > 0:
                     self.dummy_loop -= 1
-                    return rand()
+                    rand()
+                    break
 
                 laststr = str(raw_input("New price? \n"))
                 last = laststr
@@ -127,44 +130,54 @@ class TradeAPI(object):
                     last = last[:last.index("#")]
                 last = last.strip()
 
-                print "%s -> %s" % (laststr, last)
+                print "[%s] -> [%s]" % (laststr, last)
+
                 try:
                     if last == "":
-                        return rand(dir = 0)
+                        rand(dir = 0)
+                        break
+                    elif last == "up":
+                        rand(dir = 1)
+                        break
+                    elif last == "down":
+                        rand(dir = -1)
+                        break
                     elif last.startswith("loopup"):
                         self.dummy_loop_dir = 1
                         self.dummy_loop = int(last[6:])
-                        return rand()
+                        rand()
+                        break
                     elif last.startswith("loopdown"):
                         self.dummy_loop_dir = -1
                         self.dummy_loop = int(last[8:])
-                        return rand()
+                        rand()
+                        break
                     elif last.startswith("loop"):
                         self.dummy_loop_dir = 0
                         self.dummy_loop = int(last[4:])
-                        return rand()
+                        rand()
+                        break
                     elif last.startswith("*"):
                         self.price = self.price * float(last[1:])
-                    elif last.startswith("*"):
-                        self.price = self.price * float(last[1:])
-                        return self.price
+                        break
                     elif last.startswith("/"):
                         self.price = self.price / float(last[1:])
-                        return self.price
+                        break
                     elif last.startswith("+"):
                         self.price = self.price + float(last[1:])
-                        return self.price
+                        break
                     elif last.startswith("-"):
                         self.price = self.price - float(last[1:])
-                        return self.price
+                        break
                     elif isnumber(last):
                         self.price = float(last)
-                        return self.price
+                        break
                 except:
-                    pass
+                    raise
 
                 continue
         finally:
+            self.price = BTC.VALUE(self.price)
             print "new price: ", self.price
             self.process()
 

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import sys, os
-from vircuum.plan import BTC, GHS, BTCv, GHSv, GHSp, BTCp, MasterPlan, Plan, UpTrend, Buy, Sell, Action
+from vircuum.currency import BTC, GHS, BTCv, GHSv, GHSp, BTCp 
+from vircuum.plan import MasterPlan, Plan, UpTrend, Buy, Sell, Action
 from vircuum.trader import Trader
 from vircuum.tester import Tester
 import argparse

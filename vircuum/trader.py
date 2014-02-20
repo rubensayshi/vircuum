@@ -2,7 +2,7 @@ from collections import namedtuple
 import time
 from datetime import datetime
 
-from vircuum.plan import BTC, GHS
+from vircuum.currency import BTC, GHS
 
 
 class Trader(object):
@@ -30,7 +30,7 @@ class Trader(object):
             self.real_balance = balance
 
         if self.masterplan.assigned_balance.get(BTC, None):
-            assert self.real_balance >= self.masterplan.assigned_balance[BTC].value
+            assert self.real_balance >= self.masterplan.assigned_balance[BTC]
 
         self.debug_actions = []
 
@@ -111,10 +111,8 @@ class Trader(object):
     def check_current_orders(self):
         open_orders = self.tradeapi.open_orders()
 
-        print "open_orders", open_orders
-
         for buy_order in list(self.buy_orders):
-            if buy_order.id in [open_order.id for open_order in open_orders]:
+            if buy_order.status >= 1 or buy_order.id in [open_order.id for open_order in open_orders]:
                 # not processed yet :-()
                 continue
             else:
@@ -123,7 +121,7 @@ class Trader(object):
                 buy_order.status = 1
 
         for sell_order in list(self.sell_orders):
-            if sell_order.id in [open_order.id for open_order in open_orders]:
+            if sell_order.status >= 1 or sell_order.id in [open_order.id for open_order in open_orders]:
                 # not processed yet :-()
                 continue
             else:
