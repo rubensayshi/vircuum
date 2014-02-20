@@ -10,9 +10,10 @@ class Order(object):
         self.price = price
         self.amount = amount
         self.pending = pending
+        self.status = 0
 
     def __repr__(self):
-        return str(dict(id = self.id, type = self.type, price = self.price, amount = self.amount))
+        return str(dict(id = self.id, type = self.type, price = self.price, amount = self.amount, status = self.status))
 
 
 class TradeAPI(object):
@@ -50,7 +51,9 @@ class TradeAPI(object):
         return self.place_order(type = 'sell', amount = amount, price = price)
     
     def place_order(self, type, amount, price):
-        order = Order(id = self.nonce(), time = time.time(), type = type, price = price, amount = amount, pending = False)
+        id = self.nonce()
+        if self.debug: print "id", id
+        order = Order(id = id, time = time.time(), type = type, price = price, amount = amount, pending = False)
 
         if type == 'buy':
             self._balance -= price * amount
@@ -84,11 +87,12 @@ class TradeAPI(object):
                 raise Exception()
 
     def nonce(self):
-        # nonce needs to be increasing, and this also ensures we don't break the 1 req/sec rate limit
-        nonce = int(time.time())
+        new_nonce = lambda: int(time.time() * 1000)
+        nonce = new_nonce()
+
         while nonce == self.prev_nonce or (nonce % self.noncemod) != self.noncenum:
-            nonce = int(time.time())
-            time.sleep(0.01)
+            time.sleep(0.001)
+            nonce = new_nonce()
         
         if self.debug: print "nonce", nonce
 

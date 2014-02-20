@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import sys, os
+from vircuum.plan import BTC, GHS, BTCv, GHSv, GHSp, BTCp, MasterPlan, Plan, UpTrend, Buy, Sell, Action
 from vircuum.trader import Trader
 from vircuum.tester import Tester
 import argparse
@@ -12,10 +13,9 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exchange", dest="exchange", type=str, required=True, help="cexio, btce, dummy")
 parser.add_argument("-t", "--threshold", dest="threshold", type=float, required=True, help="%% change required to act (0.01 = 1%%)")
-parser.add_argument("-u", "--use-balance", dest="use_balance", type=float, required=False, default=None, help="PERCENTAGE amount of balance to use, (1.0 = 100%%)")
-parser.add_argument("-ue", "--use-balance-exact", dest="use_balance_exact", type=float, required=False, default=None, help="EXACT amount of balance to use,")
+parser.add_argument("-u", "--use-balance", dest="use_balance", type=float, default=None, help="EXACT amount of balance to use")
 parser.add_argument("-r", "--retries", dest="retries", type=int, required=False, default=10, help="loop retries")
-parser.add_argument("-s", "--steps", dest="steps", type=float, required=True, help="split balance into amount of 'steps'")
+parser.add_argument("-s", "--steps", dest="steps", type=int, required=True, help="split balance into amount of 'steps'")
 parser.add_argument("-y", "--autoconfirm", dest="autoconfirm", action="store_true", default=False, required=False, help="no longer require confirmation to place orders")
 parser.add_argument("-yy", "--autostart", dest="autostart", action="store_true", default=False, required=False, help="no longer require confirmation to start")
 parser.add_argument("-v", "--debug", dest="debug", action="store_true", default=False, required=False, help="tradeapi debug mode")
@@ -26,9 +26,6 @@ parser.add_argument("--sql", dest="sql", type=str, default=None, required=False,
 
 args = parser.parse_args()
 
-assert args.use_balance is not None or args.use_balance_exact is not None
-assert args.use_balance is None or args.use_balance_exact is None
-
 try:
     from config import config
 except:
@@ -37,7 +34,7 @@ except:
 if args.sql:
     engine = create_engine(args.sql, echo=False)
 else:
-    engine = create_engine('sqlite:///:memory:', echo=True)
+    engine = create_engine('sqlite:///:memory:', echo=False)
     Base.metadata.create_all(engine)
 
 from sqlalchemy.orm import sessionmaker
@@ -71,17 +68,23 @@ elif args.exchange == 'dummy':
 else:
     raise Exception("Unknown exchange [%s]" % args.exchange)
 
+
+masterplan = MasterPlan(assigned_balance = [BTCv(args.use_balance), GHSv(0)])
+
+uptrendplan = masterplan.add_child(Plan())
+uptrendplan.add_condition(UpTrend())
+
+for i in range(1, args.steps + 1):
+    uptrendplan.add_child(Action(Buy(GHSp(args.threshold * i), BTC), Sell(BTCp(args.threshold), GHS)))
+
 # trader
 cls = Trader if not args.test else Tester
 trader = cls(tradeapi = tradeapi,
-                threshold = args.threshold,
-                use_balance = args.use_balance,
-                use_balance_exact = args.use_balance_exact,
-                steps = args.steps,
-                autoconfirm = args.autoconfirm,
-                autostart = args.autostart,
-                retries = args.retries,
-                sessionmaker = sessionmaker,
-                **extra)
+             masterplan = masterplan,
+             autoconfirm = args.autoconfirm,
+             autostart = args.autostart,
+             retries = args.retries,
+             sessionmaker = sessionmaker,
+             **extra)
 
 trader.run()
