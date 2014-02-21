@@ -66,9 +66,13 @@ class Plan(object):
 
         total_req_balance = self.requested_balance()
 
+        print "total_req_balance", total_req_balance
+
         for child in self.children:
             child_req_balance = child.requested_balance()
             child_asigned_balance = {}
+            
+            print "child_req_balance", child, child_req_balance
 
             for currency in self.assigned_balance:
                 weight = child_req_balance.get(currency, 0.0)
@@ -93,7 +97,6 @@ class MasterPlan(Plan):
         self.assigned_balance = dict((balance.CURRENCY, balance) for balance in assigned_balance) if assigned_balance else {}
         self._trader = None
         self.initialized = False
-
 
     @property
     def trader(self):
@@ -169,7 +172,6 @@ class Action(object):
     def balance(self, value):
         self._balance = value
     
-
     def requested_balance(self):
         return {self.incurr : 1.0}
 
@@ -197,7 +199,7 @@ class Action(object):
 
 
 class Buy(Action):
-    def __init__(self, incurr, outcurr, threshold):
+    def __init__(self, outcurr, incurr, threshold):
         super(Buy, self).__init__()
 
         self.incurr    = incurr
@@ -238,7 +240,7 @@ class Buy(Action):
 
 
 class Sell(Action):
-    def __init__(self, incurr, outcurr, profit):
+    def __init__(self, outcurr, incurr, profit):
         super(Sell, self).__init__()
 
         self.incurr     = incurr
