@@ -1,23 +1,9 @@
-from vircuum.tradeapi.common import isnumber
 import time
 import random
 
 from vircuum.currency import BTC, GHS
-
-
-class Order(object):
-    def __init__(self, id, time, type, price, amount, pending):
-        self.id = id
-        self.time = time
-        self.type = type
-        self.price = price
-        self.amount = amount
-        self.pending = pending
-        self.status = 0
-
-    def __repr__(self):
-        return str(dict(id = self.id, type = self.type, price = self.price, amount = self.amount, status = self.status))
-
+from vircuum.order import APIOrder
+from vircuum.tradeapi.common import isnumber
 
 class TradeAPI(object):
     def __init__(self, noncemod = 1, noncenum = 0, *args, **kwargs):
@@ -53,7 +39,7 @@ class TradeAPI(object):
     def place_order(self, type, amount, price):
         id = self.nonce()
         if self.debug: print "id", id
-        order = Order(id = id, time = time.time(), type = type, price = price, amount = amount, pending = False)
+        order = APIOrder(id = id, time = time.time(), type = type, price = price, amount = amount, pending = 0.0)
 
         if type == 'buy':
             self._balance -= price * amount
@@ -173,7 +159,7 @@ class TradeAPI(object):
                         self.price = float(last)
                         break
                 except:
-                    raise
+                    pass
 
                 continue
         finally:

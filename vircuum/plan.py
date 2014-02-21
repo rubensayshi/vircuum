@@ -207,16 +207,19 @@ class Buy(Action):
         if not self.buy_order:
             self.place_buy_order()
             return False
-        elif self.buy_order.status == 1:
-            self.buy_order.status = 2
-            self.balance[self.outcurr] += self.outcurr.VALUE(self.buy_order.amount)
+        elif self.buy_order.is_open:
+            return False
+        elif self.buy_order.is_processed:
             return True
-        elif self.buy_order.status >= 2:
+        elif self.buy_order.is_done:
+            self.buy_order.is_processed = True
+            self.balance[self.outcurr] += self.outcurr.VALUE(self.buy_order.amount)
             return True
         else:
             return False
 
     def reset(self):
+        self.buy_order.reset()
         self.buy_order = None
 
         return super(Buy, self).reset()
@@ -248,16 +251,19 @@ class Sell(Action):
         if not self.sell_order:
             self.place_sell_order()
             return False
-        elif self.sell_order.status == 1:
-            self.sell_order.status = 2
-            self.balance[self.outcurr] += self.outcurr.VALUE(self.sell_order.price * self.sell_order.amount)
+        elif self.sell_order.is_open:
+            return False
+        elif self.sell_order.is_processed:
             return True
-        elif self.sell_order.status >= 2:
+        elif self.sell_order.is_done:
+            self.sell_order.is_processed = True
+            self.balance[self.outcurr] += self.outcurr.VALUE(self.sell_order.price * self.sell_order.amount)
             return True
         else:
             return False
 
     def reset(self):
+        self.sell_order.reset()
         self.sell_order = None
 
         return super(Sell, self).reset()

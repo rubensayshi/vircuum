@@ -3,19 +3,20 @@ import time
 from datetime import datetime
 
 from vircuum.currency import BTC, GHS
+from vircuum.order import BuyOrder, SellOrder 
 
 
 class Trader(object):
     RESET_THRESHOLD = 15 * 60
     SLEEP_PER_LOOP = 0
 
-    def __init__(self, tradeapi, masterplan, autoconfirm, autostart, retries, sessionmaker, balance = None):
+    def __init__(self, tradeapi, masterplan, autoconfirm, autostart, retries, Session, balance = None):
         self.tradeapi = tradeapi
         self.masterplan = masterplan
         self.autoconfirm = autoconfirm
         self.autostart = autostart
         self.retries = retries
-        self.sessionmaker = sessionmaker
+        self.Session = Session
 
         self.bid = 0
         self.ask = 0
@@ -36,8 +37,8 @@ class Trader(object):
 
     @property
     def session(self):
-        if self._session is None:
-            self._session = self.sessionmaker()
+        if not hasattr(self, '_session'):
+            self._session = self.Session()
 
         return self._session
 
@@ -99,33 +100,42 @@ class Trader(object):
         self.masterplan.run()
 
     def place_buy_order(self, amount, price):
-        order = self.tradeapi.place_buy_order(amount = amount, price = price)
+        apiorder = self.tradeapi.place_buy_order(amount = amount, price = price)
+
+        order = BuyOrder(trader = self, apiorder = apiorder)
+        self.session.commit()
+
         self.buy_orders.append(order)
+
         return order
 
     def place_sell_order(self, amount, price):
-        order = self.tradeapi.place_sell_order(amount = amount, price = price)
+        apiorder = self.tradeapi.place_sell_order(amount = amount, price = price)
+
+        order = SellOrder(trader = self, apiorder = apiorder)
+        self.session.commit()
+
         self.sell_orders.append(order)
+        
         return order
 
     def check_current_orders(self):
         open_orders = self.tradeapi.open_orders()
 
-        for buy_order in list(self.buy_orders):
-            if buy_order.status >= 1 or buy_order.id in [open_order.id for open_order in open_orders]:
-                # not processed yet :-()
+        for order in list(self.buy_orders):
+            if order.is_done or order.apiorder.id in [open_order.id for open_order in open_orders]:
                 continue
             else:
-                # processed! \o/
-                print "order BOUGHT %s" % buy_order
-                buy_order.status = 1
+                print "order BOUGHT %s" % order
+                order.is_done = True
 
-        for sell_order in list(self.sell_orders):
-            if sell_order.status >= 1 or sell_order.id in [open_order.id for open_order in open_orders]:
-                # not processed yet :-()
+
+        for order in list(self.sell_orders):
+            if order.is_done or order.apiorder.id in [open_order.id for open_order in open_orders]:
                 continue
             else:
-                # processed! \o/
-                print "order SOLD %s" % sell_order
-                sell_order.status = 1
+                print "order SOLD %s" % order
+                order.is_done = True
+
+        self.session.commit()
 

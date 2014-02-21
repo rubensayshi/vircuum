@@ -88,7 +88,7 @@ trader = cls(tradeapi = tradeapi,
              autoconfirm = args.autoconfirm,
              autostart = args.autostart,
              retries = args.retries,
-             sessionmaker = sessionmaker,
+             Session = Session,
              **extra)
 
 trader.run()

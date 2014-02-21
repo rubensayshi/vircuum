@@ -5,35 +5,27 @@ from sqlalchemy import Column, Integer, String, Float, Text, Boolean
 Base = declarative_base()
 
 
-class Status(Base):
-    __tablename__ = 'status'
+class DBOrder(object):
     id = Column(Integer, primary_key = True)
-    balance = Column(Float)
-    real_balance = Column(Float)
-    start_balance = Column(Float)
-    max_balance = Column(Float)
-
-
-class Order(object):
-    id = Column(Integer, primary_key = True)
+    foreign_id = Column(Integer)
     amount = Column(Float)
     price  = Column(Float)
     timestamp = Column(Float)
-    done = Column(Boolean)
+    pending = Column(Float)
+    status = Column(Integer)
 
 
-class SellOrder(Base, Order):
+class DBSellOrder(Base, DBOrder):
     __tablename__ = 'sell_order'
 
 
-class BuyOrder(Base, Order):
+class DBBuyOrder(Base, DBOrder):
     __tablename__ = 'buy_order'
 
 
-class LogMessage(Base):
+class DBLogMessage(Base):
     __tablename__ = 'log_message'
     id = Column(Integer, primary_key = True)
     status = Column(String)
     msg = Column(Text)
-
 
