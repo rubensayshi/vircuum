@@ -66,14 +66,10 @@ class Plan(object):
 
         total_req_balance = self.requested_balance()
 
-        print "total_req_balance", total_req_balance
-
         for child in self.children:
             child_req_balance = child.requested_balance()
             child_asigned_balance = {}
             
-            print "child_req_balance", child, child_req_balance
-
             for currency in self.assigned_balance:
                 weight = child_req_balance.get(currency, 0.0)
                 total  = total_req_balance.get(currency, 0)
