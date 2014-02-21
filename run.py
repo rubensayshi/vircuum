@@ -76,7 +76,10 @@ uptrendplan = masterplan.add_child(Plan())
 uptrendplan.add_condition(UpTrend())
 
 for i in range(1, args.steps + 1):
-    uptrendplan.add_child(Action(Buy(GHSp(args.threshold * i), BTC), Sell(BTCp(args.threshold), GHS)))
+    action   = Buy(GHS, BTC, args.threshold * i)
+    reaction = action.reaction(Sell(BTC, GHS, args.threshold))
+
+    uptrendplan.add_child(action)
 
 # trader
 cls = Trader if not args.test else Tester
