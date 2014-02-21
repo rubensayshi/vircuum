@@ -2,11 +2,11 @@ from vircuum.models import DBBuyOrder, DBSellOrder
 
 
 class Order(object):
-    STATUS_OPEN = 0
-    STATUS_PARTIAL = 1
-    STATUS_DONE = 2
+    STATUS_OPEN      = 0
+    STATUS_PARTIAL   = 1
+    STATUS_DONE      = 2
     STATUS_PROCESSED = 3
-    STATUS_RESET = 99
+    STATUS_RESET     = 99
 
     def __init__(self, trader, apiorder = None, dborder = None):
         self.trader   = trader
