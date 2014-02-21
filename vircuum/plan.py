@@ -119,16 +119,15 @@ class MasterPlan(Plan):
 
 
 class Action(object):
-    def __init__(self, actionA, actionB, parent = None):
-        self.actionA = actionA
-        self.actionB = actionB
+    def __init__(self, parent = None):
         self.parent  = parent
+        
+        self.incurr  = None
+        self.outcurr = None
 
-        self.actionA.action = self
-        self.actionB.action = self
-
-        self.balance = {}
-        self._price = None
+        self.balance   = {}
+        self._price    = None
+        self._reaction = None
 
     @property
     def price(self):
@@ -145,37 +144,47 @@ class Action(object):
     def trader(self):
         return self.parent.trader
 
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, value):
+        self._parent = value
+
+    @property
+    def reaction(self):
+        return self._reaction
+    
+    @reaction.setter
+    def reaction(self, reaction):
+        reaction.parent = self
+        self._reaction = reaction
+
+    @property
+    def balance(self):
+        return self._balance or self.parent.balance
+    
+    @balance.setter
+    def balance(self, value):
+        self._balance = value
+    
+
     def requested_balance(self):
-        return {self.actionA.currency() : 1.0}
+        return {self.incurr : 1.0}
 
     def assign_balance(self, assigned_balance):
         self.balance = assigned_balance
 
     def run(self):
-        return self.execute()
+        if not self.execute():
+            return False
 
-    def execute(self):
-        self.fixate_price()
+        if self.reaction and not self.reaction.run():
+            return False
 
-        if self.actionA.execute():
-            self.actionB.price = self.actionA.price
-            if self.actionB.execute():
-                self.actionB.reset()
-                self.actionA.reset()
-
-                return self.execute()
-
-
-class Task(object):
-    def __init__(self):
-        self.action  = None
-        self._price  = None
-        self.incurr  = None
-        self.outcurr = None
-
-    @property
-    def trader(self):
-        return self.action.trader
+        self.reset()
+        return True
 
     def execute(self):
         self.fixate_price()
@@ -186,19 +195,8 @@ class Task(object):
 
         return True
 
-    @property
-    def price(self):
-        return self._price or self.action.price
 
-    @price.setter
-    def price(self, price):
-        self._price = price
-
-    def fixate_price(self):
-        self.price = self.price
-
-
-class Buy(Task):
+class Buy(Action):
     def __init__(self, incurr, outcurr, threshold):
         super(Buy, self).__init__()
 
@@ -213,7 +211,7 @@ class Buy(Task):
             return False
         elif self.buy_order.status == 1:
             self.buy_order.status = 2
-            self.action.balance[self.outcurr] += self.outcurr.VALUE(self.buy_order.amount)
+            self.balance[self.outcurr] += self.outcurr.VALUE(self.buy_order.amount)
             return True
         elif self.buy_order.status >= 2:
             return True
@@ -230,23 +228,23 @@ class Buy(Task):
 
     def place_buy_order(self):
         price  = self.price = self.price * (1 - self.threshold)
-        amount = self.action.balance[self.incurr] / price
+        amount = self.balance[self.incurr] / price
 
-        print "place_buy_order", self.price, self.action.balance[self.incurr], amount
+        print "place_buy_order", self.price, self.balance[self.incurr], amount
 
         self.buy_order = self.trader.place_buy_order(amount = amount, price = price)
 
-        self.action.balance[self.incurr] -= self.incurr.VALUE(self.buy_order.price * self.buy_order.amount)
+        self.balance[self.incurr] -= self.incurr.VALUE(self.buy_order.price * self.buy_order.amount)
 
 
-class Sell(Task):
+class Sell(Action):
     def __init__(self, incurr, outcurr, profit):
-        super(Buy, self).__init__()
+        super(Sell, self).__init__()
 
-        self.incurr    = incurr
-        self.outcurr   = outcurr
-        self.profit    = profit
-        self.buy_order = None
+        self.incurr     = incurr
+        self.outcurr    = outcurr
+        self.profit     = profit
+        self.sell_order = None
 
     def execute(self):
         if not self.sell_order:
@@ -254,7 +252,7 @@ class Sell(Task):
             return False
         elif self.sell_order.status == 1:
             self.sell_order.status = 2
-            self.action.balance[self.outcurr] += self.outcurr.VALUE(self.sell_order.price * self.sell_order.amount)
+            self.balance[self.outcurr] += self.outcurr.VALUE(self.sell_order.price * self.sell_order.amount)
             return True
         elif self.sell_order.status >= 2:
             return True
@@ -268,13 +266,13 @@ class Sell(Task):
 
     def place_sell_order(self):
         price = self.price = self.price * (1 + self.profit)
-        amount = self.action.balance[self.incurr]
+        amount = self.balance[self.incurr]
 
-        print "place_sell_order", self.price, self.action.balance[self.incurr], amount
+        print "place_sell_order", self.price, self.balance[self.incurr], amount
 
         self.sell_order = self.trader.place_sell_order(amount = amount, price = price)
 
-        self.action.balance[self.incurr] -= self.sell_order.amount
+        self.balance[self.incurr] -= self.sell_order.amount
 
 
 class Condition(object):

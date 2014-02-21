@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import sys, os
 from vircuum.currency import BTC, GHS, BTCv, GHSv, GHSp, BTCp 
-from vircuum.plan import MasterPlan, Plan, UpTrend, Buy, Sell, Action
+from vircuum.plan import MasterPlan, Plan, UpTrend, Buy, Sell
 from vircuum.trader import Trader
 from vircuum.tester import Tester
 import argparse
@@ -77,7 +77,7 @@ uptrendplan.add_condition(UpTrend())
 
 for i in range(1, args.steps + 1):
     action   = Buy(GHS, BTC, args.threshold * i)
-    reaction = action.reaction(Sell(BTC, GHS, args.threshold))
+    reaction = action.reaction = Sell(BTC, GHS, args.threshold)
 
     uptrendplan.add_child(action)
 
