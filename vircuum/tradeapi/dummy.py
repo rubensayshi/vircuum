@@ -13,12 +13,12 @@ class TradeAPI(object):
         self._balance = BTC.VALUE(1)
         self.orders = []
         self.prev_nonce = None
+        self.prev_ticknonce = None
         self.noncenum = noncenum
         self.noncemod = noncemod
         self.debug = True
 
     def ticker(self):
-        self.nonce()
         self.dummy_price()
         return (self.price, self.price, )
 
@@ -87,8 +87,23 @@ class TradeAPI(object):
 
         return nonce
 
-    def dummy_price(self):
+    def ticknonce(self):
+        new_nonce = lambda: int(time.time())
+        nonce = new_nonce()
 
+        while nonce == self.prev_ticknonce or (nonce % self.noncemod) != self.noncenum:
+            time.sleep(0.1)
+            nonce = new_nonce()
+        
+        if self.debug: print "ticknonce", nonce
+
+        self.prev_ticknonce = nonce
+
+        return nonce
+
+    def dummy_price(self):
+        self.ticknonce()
+        
         def rand(dir = None):
             if dir is None:
                 dir = self.dummy_loop_dir

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from vircuum.currency import BTC, GHS
 from vircuum.order import BuyOrder, SellOrder
-from vircuum.models import DBLogMessage, DBBank, DBBalance
+from vircuum.models import DBLogMessage, DBBank, DBBalance, DBPrice
 
 
 class Trader(object):
@@ -107,6 +107,7 @@ class Trader(object):
 
     def loop(self):
         (self.bid, self.ask) = self.get_price()
+        self.session.add(DBPrice(int(time.time()), self.ask))
 
         self.check_current_orders()
         self.masterplan.run()

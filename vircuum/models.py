@@ -32,6 +32,18 @@ class DBBalance(Base):
         self.amount = amount
 
 
+class DBPrice(Base):
+    __tablename__ = 'price'
+
+    id = Column(Integer, primary_key = True)
+    timestamp = Column(Integer)
+    price = Column(DOUBLE)
+
+    def __init__(self, timestamp, price):
+        self.timestamp = timestamp
+        self.price = price
+
+
 class DBOrder(object):
     id = Column(Integer, primary_key = True)
     foreign_id = Column(BIGINT)
