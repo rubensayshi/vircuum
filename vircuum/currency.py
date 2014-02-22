@@ -1,11 +1,21 @@
 
 
+class CurrencyClass(type):
+    def __str__(self):
+        return self.NAME
+
+
 class Currency(object):
+    __metaclass__ = CurrencyClass
+
     NAME = None
 
     @classmethod
     def round(cls, value):
         return float(value)
+
+    def __init__(self):
+        raise NotImplementedError()
 
 
 class CurrencyV(object):

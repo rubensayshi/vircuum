@@ -33,6 +33,14 @@ except:
 
 engine = sqlalchemy.create_engine(config['MYSQL_CONNECT'], echo=False)
 
+# until we can pick up the state from the DB we need to flush the DB
+if True:
+    for tbl in reversed(Base.metadata.sorted_tables):
+        if tbl.exists(engine):
+            tbl.drop(engine)
+
+    Base.metadata.create_all(engine)
+
 Session = sqlalchemy.orm.sessionmaker(bind=engine)
 
 extra = {}

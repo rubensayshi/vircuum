@@ -231,7 +231,7 @@ class Buy(Action):
         price  = self.price = self.price * (1 - self.threshold)
         amount = self.balance[self.incurr] / price
 
-        print "place_buy_order", self.price, self.balance[self.incurr], amount
+        self.trader.log_action("place_buy_order for %s @ %s" % (amount, price))
 
         self.buy_order = self.trader.place_buy_order(amount = amount, price = price)
 
@@ -272,7 +272,7 @@ class Sell(Action):
         price = self.price = self.price * (1 + self.profit)
         amount = self.balance[self.incurr]
 
-        print "place_sell_order", self.price, self.balance[self.incurr], amount
+        self.trader.log_action("place_sell_order for %s @ %s" % (amount, price))
 
         self.sell_order = self.trader.place_sell_order(amount = amount, price = price)
 

@@ -18,7 +18,8 @@ engine = sqlalchemy.create_engine(config['MYSQL_CONNECT'], echo=False)
 
 if args.reset:
     for tbl in reversed(Base.metadata.sorted_tables):
-        tbl.drop(engine)
+        if tbl.exists(engine):
+            tbl.drop(engine)
 
 Base.metadata.create_all(engine)
 

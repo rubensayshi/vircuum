@@ -3,7 +3,8 @@ import time
 from datetime import datetime
 
 from vircuum.currency import BTC, GHS
-from vircuum.order import BuyOrder, SellOrder 
+from vircuum.order import BuyOrder, SellOrder
+from vircuum.models import DBLogMessage, DBBank, DBBalance
 
 
 class Trader(object):
@@ -33,8 +34,18 @@ class Trader(object):
         if self.masterplan.assigned_balance.get(BTC, None):
             assert self.real_balance >= self.masterplan.assigned_balance[BTC]
 
-        self.debug_actions = []
+        self.start_balance = DBBank('start_balance')
+        self.session.add(self.start_balance)
 
+        for currency, amount in self.masterplan.assigned_balance.items():
+            self.start_balance.balance.append(DBBalance(currency = currency,
+                                                        amount   = amount))
+        
+        self.current_balance = DBBank('current_balance')
+        self.session.add(self.current_balance)
+
+        self.session.commit()
+        
     @property
     def session(self):
         if not hasattr(self, '_session'):
@@ -46,8 +57,9 @@ class Trader(object):
     def session(self, session):
         self._session = session
 
-    def debug_action(self, msg):
-        self.debug_actions.append(msg)
+    def log_action(self, msg, status = 'log'):
+        self.session.add(DBLogMessage(msg, timestamp = int(time.time()), status = status))
+        print "[%s] %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), msg)
         return msg
 
     def run(self):
@@ -126,7 +138,7 @@ class Trader(object):
             if order.is_done or order.apiorder.id in [open_order.id for open_order in open_orders]:
                 continue
             else:
-                print "order BOUGHT %s" % order
+                self.log_action("order_bought %s @ %s" % (order.amount, order.price))
                 order.is_done = True
 
 
@@ -134,7 +146,7 @@ class Trader(object):
             if order.is_done or order.apiorder.id in [open_order.id for open_order in open_orders]:
                 continue
             else:
-                print "order SOLD %s" % order
+                self.log_action("order_sold %s @ %s" % (order.amount, order.price))
                 order.is_done = True
 
         self.session.commit()
