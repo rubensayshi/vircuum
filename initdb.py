@@ -2,7 +2,7 @@
 import sys, os
 import argparse
 import sqlalchemy
-from vircuum.models import Base
+from vircu.trader.models import Base
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--reset", dest="reset", action='store_true', default=False, help="reset current data")

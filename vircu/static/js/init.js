@@ -1,0 +1,1 @@
+var VirCu = window.VirCu = {};

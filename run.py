@@ -1,13 +1,14 @@
 #! /usr/bin/env python
 import sys, os
-from vircuum.currency import BTC, GHS, BTCv, GHSv, GHSp, BTCp 
-from vircuum.plan import MasterPlan, Plan, UpTrend, Buy, Sell
-from vircuum.trader import Trader
-from vircuum.tester import Tester
 import argparse
 import sqlalchemy
-from vircuum.trader import Trader
-from vircuum.models import Base
+
+from vircu.trader.currency import BTC, GHS, BTCv, GHSv, GHSp, BTCp 
+from vircu.trader.plan import MasterPlan, Plan, UpTrend, Buy, Sell
+from vircu.trader.trader import Trader
+from vircu.trader.tester import Tester
+
+from vircu.trader.models import Base
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
@@ -46,7 +47,7 @@ Session = sqlalchemy.orm.sessionmaker(bind=engine)
 extra = {}
 
 if args.exchange == 'cexio':
-    from vircuum.tradeapi.cexio import TradeAPI
+    from vircu.tradeapi.cexio import TradeAPI
     tradeapi = TradeAPI(api_key=config.get('CEXIO_API_KEY'),
                         api_secret=config.get('CEXIO_API_SECRET'),
                         username=config.get('CEXIO_USERNAME'),
@@ -55,7 +56,7 @@ if args.exchange == 'cexio':
                         debug=args.debug)
 
 elif args.exchange == 'bitstamp':
-    from vircuum.tradeapi.bitstamp import TradeAPI
+    from vircu.tradeapi.bitstamp import TradeAPI
     tradeapi = TradeAPI(api_key=config.get('BITSTAMP_API_KEY'),
                         api_secret=config.get('BITSTAMP_API_SECRET'),
                         clientid=config.get('BITSTAMP_CLIENTID'),
@@ -64,7 +65,7 @@ elif args.exchange == 'bitstamp':
                         debug=args.debug)
 
 elif args.exchange == 'dummy':
-    from vircuum.tradeapi.dummy import TradeAPI
+    from vircu.tradeapi.dummy import TradeAPI
     tradeapi = TradeAPI(noncenum=args.noncenum,
                         noncemod=args.noncemod)
 

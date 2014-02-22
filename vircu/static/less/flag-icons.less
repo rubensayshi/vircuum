@@ -1,0 +1,81 @@
+/*
+ * large image containing all countries with small banners, saving this here incase we need it
+//*
+@flag-icon-sprite: url('/static/img/flag-icons.png');
+@flag-icon-sprite-width:  304px;
+@flag-icon-sprite-height: 609px;
+@flag-icon-width:  @flag-icon-sprite-width  / 11;
+@flag-icon-height: @flag-icon-sprite-height / 22;
+*/
+
+/*
+ * small image containing only a few countries with pretty rounded icons
+ */
+@flag-icon-sprite: url('/static/img/flag-icons.jpg');
+@flag-icon-sprite-width:  192px;
+@flag-icon-sprite-height: 192px;
+@flag-icon-width:  @flag-icon-sprite-width  / 6;  // 32px
+@flag-icon-height: @flag-icon-sprite-height / 6;  // 32px
+
+.flag-base(@size: 1) {
+    display: inline-block;
+    
+    background-image: @flag-icon-sprite;
+    background-size: @flag-icon-sprite-width * @size @flag-icon-sprite-height * @size;
+    background-repeat: no-repeat;
+    width: @flag-icon-width * @size;
+    height: @flag-icon-height * @size;
+}
+
+.flags(@size: 1) {
+    &.flag-icon-nl {
+        .flag-icon-position(4, 5, @size);
+    }
+    &.flag-icon-de {
+        .flag-icon-position(1, 4, @size);
+    }
+}
+
+.flag-icon-position(@x, @y, @size: 1) {
+    background-position: (((@x - 1) * (@flag-icon-width * @size)) * -1) (((@y - 1) * (@flag-icon-height * @size)) * -1);
+}
+
+.flag-icon {
+    .flag-base();
+    .flags();
+}
+
+.flag-icon-14 {
+    @size: 14px / @flag-icon-width;
+
+    .flag-base(@size);
+    .flags(@size);
+}
+
+.flag-icon-18 {
+    @size: 18px / @flag-icon-width;
+
+    .flag-base(@size);
+    .flags(@size);
+}
+
+.flag-icon-19 {
+    @size: 19px / @flag-icon-width;
+
+    .flag-base(@size);
+    .flags(@size);
+}
+
+.flag-icon-20 {
+    @size: 20px / @flag-icon-width;
+
+    .flag-base(@size);
+    .flags(@size);
+}
+
+.flag-icon-32 {
+    @size: 32px / @flag-icon-width;
+
+    .flag-base(@size);
+    .flags(@size);
+}

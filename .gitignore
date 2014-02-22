@@ -1,5 +1,9 @@
-build
 *.pyc
-env
+.project
+.settings
+.pydevproject
 .idea
+env
+node_modules
+VERSION
 config.py

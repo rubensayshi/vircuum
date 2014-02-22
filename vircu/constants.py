@@ -1,0 +1,3 @@
+ENV_DEV = 0
+ENV_STAGING = 1
+ENV_LIVE = 2

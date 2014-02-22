@@ -1,0 +1,35 @@
+{% macro menu_item_href(item, display_children=True) %}
+    {% set display_children = display_children and item.has_children %}
+
+    <a href="{{ item.href }}" {% if item.open_in_new %}target="_blank"{% endif %} {% if display_children %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}>
+        {% if item.faicon %}<i class="fa fa-fw {{ item.faicon }}"></i>{% endif %} 
+        {% if item.icon %}<img class="img-icon" src="{{ url_for_static(item.icon) }}" />{% endif %} 
+        {{ item.title }} {% if display_children %}<b class="caret"></b>{% endif %}
+    </a>
+{% endmacro %}
+
+{% macro menu_item(item, active_path=True, depth=1, current_depth=1) %}
+    {% set display_children = depth >= current_depth and item.has_children %}
+    {% set active_path = active_path and item.active_path %}
+
+    <li class="{% if item.submenu %}dropdown-submenu{% endif %}{% if active_path %}active {% endif %}{% if display_children %}dropdown {% endif %}">
+        {{ menu_item_href(item, display_children) }}
+        <ul class="dropdown-menu">
+            {% if item.show_self %}
+                <li class="{% if item.active %}active{% endif %}">{{ menu_item_href(item, False) }}</li>
+            {% endif %}
+            {% for child in item %}
+                {{ menu_item(child, active_path, depth, current_depth+1) }}
+            {% endfor %}
+        </ul>
+        {% if item.submenu %}
+            <ul class="dropdown-menu">
+            {% for subitem in item.submenu %}
+                <li>
+                    <a tabindex="-1" href="{{ subitem.href }}" {% if subitem.open_in_new %}target="_blank"{% endif %}>{{subitem.title}}</a>
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </li>
+{% endmacro %}
