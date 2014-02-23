@@ -79,7 +79,7 @@ from socketio import socketio_manage
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
 from flask import request, Response
-from vircu.trader.trader import SocketState
+from vircu.trader.state import SocketState
 
 
 class TraderNamespace(BaseNamespace, BroadcastMixin):
