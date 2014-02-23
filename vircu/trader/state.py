@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 class TraderState(object):
 
     def assigned_balance(self, assigned_balance):
@@ -127,7 +128,6 @@ class SocketState(CLIState):
 
         for sessid, socket in self.server.sockets.iteritems():
             socket.send_packet(pkt)
-
 
 
 class Order(object):
