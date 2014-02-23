@@ -2,14 +2,17 @@
 import sys, os
 import argparse
 import sqlalchemy
-import gevent
-
 from gevent import monkey; monkey.patch_all()
+
+import gevent
+from socketio.server import SocketIOServer
 
 from vircu.trader.currency import BTC, GHS, BTCv, GHSv, GHSp, BTCp 
 from vircu.trader.plan import MasterPlan, Plan, UpTrend, Buy, Sell
 from vircu.trader.trader import Trader
 from vircu.trader.tester import Tester
+from vircu.trader.state import SocketState
+from vircu.trader.socketserver import setup_socketio
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
@@ -75,28 +78,9 @@ for i in range(1, args.steps + 1):
 
 
 from vircu_app import app
-from socketio import socketio_manage
-from socketio.namespace import BaseNamespace
-from socketio.mixins import BroadcastMixin
-from flask import request, Response
-from vircu.trader.state import SocketState
 
+setup_socketio(app)
 
-class TraderNamespace(BaseNamespace, BroadcastMixin):
-    def on_init(self):
-        self.broadcast_event('msg', 'TEST')
-
-    def recv_message(self, message):
-        print "PING!!!", message
-
-
-@app.route("/socket.io/<path:path>")
-def run_socketio(path):
-    socketio_manage(request.environ, {'/trader': TraderNamespace})
-    return Response()
-
-
-from socketio.server import SocketIOServer
 server = SocketIOServer(('0.0.0.0', 5000), app, resource="socket.io")
 state  = SocketState(server)
 

@@ -8,8 +8,6 @@ from vircu.threading import raw_input
 
 
 class Trader(object):
-    RESET_THRESHOLD = 15 * 60
-    SLEEP_PER_LOOP = 0
 
     def __init__(self, tradeapi, masterplan, autoconfirm, autostart, retries, state, balance = None):
         self.tradeapi = tradeapi
