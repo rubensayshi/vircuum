@@ -103,8 +103,6 @@ class TradeAPI(object):
         return nonce
 
     def dummy_price(self):
-        self.ticknonce()
-        
         def rand(dir = None):
             if dir is None:
                 dir = self.dummy_loop_dir
@@ -179,6 +177,7 @@ class TradeAPI(object):
 
                 continue
         finally:
+            self.ticknonce()
             self.price = BTC.VALUE(self.price)
             print "new price: ", self.price
             self.process()

@@ -4,8 +4,8 @@ from vircu.view.menu import Menu, MenuItem, PlaceholderMenuItem, SectionMenuItem
 class MainMenu(Menu):
     def build_items(self):
         # register list_articles menu item
-        self.add(MenuItem('Home',
-                          endpoint='main.index',
-                          faicon='fa-home',
+        self.add(MenuItem('Status',
+                          endpoint='main.status',
+                          faicon='fa-stethoscope',
                           weight=0))
 

@@ -68,8 +68,6 @@ class BaseConfig(VirCuBaseConfig):
     SQLALCHEMY_POOL_RECYCLE = 600
     DATABASE_CONNECT_OPTIONS = {}
     
-    SHOW_BRAND = True
-    
     TICKER_SILENT = __REQUIRED__
     OLD_THRESHOLD = 5 * 60
 

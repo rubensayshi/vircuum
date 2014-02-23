@@ -5,5 +5,10 @@ from flask import request, redirect, render_template, Response, url_for, current
 main = Blueprint('main', __name__)
 @main.route('/')
 def index():
-    return render_template("desktop/home.html")
+    return redirect(url_for('.status'))
+
+
+@main.route('/status')
+def status():
+    return render_template("desktop/status.html")
 
