@@ -11,8 +11,6 @@ from vircu.trader.plan import MasterPlan, Plan, UpTrend, Buy, Sell
 from vircu.trader.trader import Trader
 from vircu.trader.tester import Tester
 
-from vircu.trader.models import Base
-
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 parser = argparse.ArgumentParser()
@@ -34,18 +32,6 @@ try:
     from config import config
 except:
     raise Exception("You need to copy `config.example.py` to `config.py` and fill in your data")
-
-engine = sqlalchemy.create_engine(config['MYSQL_CONNECT'], echo=False)
-
-# until we can pick up the state from the DB we need to flush the DB
-if True:
-    for tbl in reversed(Base.metadata.sorted_tables):
-        if tbl.exists(engine):
-            tbl.drop(engine)
-
-    Base.metadata.create_all(engine)
-
-Session = sqlalchemy.orm.sessionmaker(bind=engine)
 
 extra = {}
 
@@ -121,7 +107,6 @@ trader = cls(tradeapi = tradeapi,
              autoconfirm = args.autoconfirm,
              autostart = args.autostart,
              retries = args.retries,
-             Session = Session,
              state = state,
              **extra)
 

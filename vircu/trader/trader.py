@@ -40,33 +40,46 @@ class CLIState(TraderState):
         self.buy_orders = []
         self.sell_orders = []
 
+    def assigned_balance(self, assigned_balance):
+        print "assigned_balance", assigned_balance
+        return self
+
     def log_message(self, msg, status = None, dt = None):
         dt = dt or datetime.now()
         status = status or 'log'
 
         print msg, status, dt
+        return self
 
     def tick(self, price, dt):
         print "price", str(price)
+        return self
+
+    def add_order(self, order):
+        print "new order %s" % order
+        self.order_container(order).append(order)
+        return self
+
+    def order_done(self, order):
+        print "order done %s" % order
+        return self
+
+    def order_processed(self, order):
+        print "order processed %s" % order
+        return self
+
+    def order_reset(self, order):
+        print "order processed %s" % order
+        return self
+
+    def flush(self):
+        return self
 
     def order_container(self, order):
         if isinstance(order, BuyOrder):
             return self.buy_orders
         elif isinstance(order, SellOrder):
             return self.sell_orders
-
-    def add_order(self, order):
-        print "new order %s" % order
-        self.order_container(order).append(order)
-
-    def order_done(self, order):
-        print "order done %s" % order
-
-    def order_processed(self, order):
-        print "order processed %s" % order
-
-    def order_reset(self, order):
-        print "order processed %s" % order
 
 
 class SocketState(CLIState):
@@ -75,35 +88,39 @@ class SocketState(CLIState):
         super(SocketState, self).__init__()
         self.server = server
 
+    def assigned_balance(self, assigned_balance):
+        self.broadcast_event("msg", str(assigned_balance))
+        return super(SocketState, self).assigned_balance(assigned_balance)
+
     def log_message(self, msg, status = None, dt = None):
         dt = dt or datetime.now()
         status = status or 'log'
 
         self.broadcast_event("msg", msg, status, str(dt))
-        super(SocketState, self).log_message(msg, status)
+        return super(SocketState, self).log_message(msg, status)
 
     def tick(self, price, dt):
         self.broadcast_event("msg", "price", str(price), str(dt))
-        super(SocketState, self).tick(price, dt)
+        return super(SocketState, self).tick(price, dt)
 
     def add_order(self, order):
         self.broadcast_event("msg", "new order %s" % order)
-        super(SocketState, self).add_order(order)
+        return super(SocketState, self).add_order(order)
 
     def order_done(self, order):
         self.broadcast_event("msg", "order done %s" % order)
-        super(SocketState, self).order_done(order)
+        return super(SocketState, self).order_done(order)
 
     def order_processed(self, order):
         self.broadcast_event("msg", "order processed %s" % order)
-        super(SocketState, self).order_processed(order)
+        return super(SocketState, self).order_processed(order)
 
     def order_reset(self, order):
         self.broadcast_event("msg", "order reset %s" % order)
-        super(SocketState, self).order_reset(order)
+        return super(SocketState, self).order_reset(order)
 
     def flush(self):
-        pass
+        return super(SocketState, self).flush()
 
     def broadcast_event(self, event, *args):
         """
@@ -129,7 +146,6 @@ class Trader(object):
         self.autoconfirm = autoconfirm
         self.autostart = autostart
         self.retries = retries
-        self.Session = Session
         self.state = state
 
         self.bid = 0
@@ -144,34 +160,14 @@ class Trader(object):
         else:
             self.real_balance = balance
 
+        # TODO check all currencies, not just BTC
         if self.masterplan.assigned_balance.get(BTC, None):
             assert self.real_balance >= self.masterplan.assigned_balance[BTC]
 
-        self.start_balance = DBBank('start_balance')
-        self.session.add(self.start_balance)
-
-        for currency, amount in self.masterplan.assigned_balance.items():
-            self.start_balance.balance.append(DBBalance(currency = currency,
-                                                        amount   = amount))
-        
-        self.current_balance = DBBank('current_balance')
-        self.session.add(self.current_balance)
-
-        self.session.commit()
-        
-    @property
-    def session(self):
-        if not hasattr(self, '_session'):
-            self._session = self.Session()
-
-        return self._session
-
-    @session.setter
-    def session(self, session):
-        self._session = session
+        self.state.assigned_balance(self.masterplan.assigned_balance).flush()
 
     def log_action(self, msg, status = None):
-        self.state.log_message(msg, status)
+        self.state.log_message(msg, status).flush()
 
     def run(self):
         if not self.autostart:
@@ -218,7 +214,7 @@ class Trader(object):
 
     def loop(self):
         (self.bid, self.ask) = self.get_price()
-        self.state.tick(self.ask, datetime.now())
+        self.state.tick(self.ask, datetime.now()).flush()
 
         self.check_current_orders()
         self.masterplan.run()
@@ -227,11 +223,9 @@ class Trader(object):
         apiorder = self.tradeapi.place_buy_order(amount = amount, price = price)
 
         order = BuyOrder(state = self.state, apiorder = apiorder)
-        self.session.commit()
 
-
-        self.state.add_order(order)
         self.buy_orders.append(order)
+        self.state.add_order(order).flush()
 
         return order
 
@@ -239,10 +233,9 @@ class Trader(object):
         apiorder = self.tradeapi.place_sell_order(amount = amount, price = price)
 
         order = SellOrder(state = self.state, apiorder = apiorder)
-        self.session.commit()
-
-        self.state.add_order(order)
+        
         self.sell_orders.append(order)
+        self.state.add_order(order).flush()
         
         return order
 
@@ -262,5 +255,5 @@ class Trader(object):
             else:
                 order.is_done = True
 
-        self.session.commit()
+        self.state.flush()
 
