@@ -1,55 +1,7 @@
 {% extends "desktop/base.html" %}
 
 {%- block page_content %}
-    <div class="row">
-        <div class="col-md-12">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Buy Orders</h2>
-                        </div>
-
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Amount</th>
-                                    <th>Price</th>
-                                    <th>Age</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>0.23672 GHS</td>
-                                    <td>0.23672 <i class="fa fa-fw fa-btc"></i></td>
-                                    <td>33min</td>
-                                    <td>1</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="col-md-6"></div>
-            </div>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Message Log</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h2 class="panel-title"><i class="fa fa-fw fa-list"></i> Price Log</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div id="trader"></div>
 {%- endblock %}
 
 <script>
@@ -58,7 +10,7 @@
 WEB_SOCKET_SWF_LOCATION = "../WebSocketMain.swf";
 WEB_SOCKET_DEBUG = true;
 
-VirCu.trader = new Trader();
+VirCu.trader = new Trader($('#trader').get(0));
 
 {% endondomready %}
 </script>

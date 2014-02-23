@@ -59,9 +59,10 @@
             </footer>
         {% endblock %}
 
+        <script type="text/javascript" src="{{ url_for_static('compiled/react%(min)s.js') }}"></script>
         <script type="text/javascript" src="{{ url_for_static('compiled/jquery%(min)s.js') }}"></script>
-        <script type="text/javascript" src="{{ url_for_static('compiled/highstock%(min)s.js') }}"></script>
         <script type="text/javascript" src="{{ url_for_static('compiled/desktop%(min)s.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for_static('compiled/templates%(min)s.js') }}"></script>
 
         {%- block footer_js %}{% endblock %}
 

@@ -24,6 +24,25 @@ module.exports = function (grunt) {
             }
         },
 
+        react : {
+            templates: {
+                files: [
+                    {
+                    expand: true,
+                    cwd: 'vircu/static/js/templates',
+                    src: ['*.jsx', '**/*.jsx'],
+                    dest: 'vircu/static/compiled/templates',
+                    ext: '.js'
+                    }
+                ]
+            },
+            react: {
+              files : {
+                'vircu/static/compiled/jsx/trader.js' : 'vircu/static/js/trader.jsx'
+              }
+          }
+      },
+
         /*
          * Javascript concatenation
          */
@@ -31,6 +50,14 @@ module.exports = function (grunt) {
             jquery : {
                 src : ['vircu/static/js/lib/jquery-1.8.2.min.js'],
                dest : 'vircu/static/compiled/jquery.js'
+            },
+            react : {
+                src : ['vircu/static/libs/react-0.9.0/build/react-with-addons.js'],
+               dest : 'vircu/static/compiled/react.js'
+            },
+            templates : {
+                src : ['vircu/static/compiled/templates/*.js'],
+                dest : 'vircu/static/compiled/templates.js',
             },
             desktop: {
                 src : ['vircu/static/libs/bootstrap-3.1.1/js/transition.js',
@@ -60,7 +87,7 @@ module.exports = function (grunt) {
 
                        'vircu/static/js/init.js',
                        'vircu/static/js/date.js',
-                       'vircu/static/js/trader.js',
+                       'vircu/static/compiled/jsx/trader.js',
                        ],
                 dest : 'vircu/static/compiled/desktop.js'
             },
@@ -80,6 +107,8 @@ module.exports = function (grunt) {
                 files : {
                     'vircu/static/compiled/jquery.min.js'        : ['<%= concat.jquery.dest %>'],
                     'vircu/static/compiled/desktop.min.js'       : ['<%= concat.desktop.dest %>'],
+                    'vircu/static/compiled/react.min.js'         : ['<%= concat.react.dest %>'],
+                    'vircu/static/compiled/templates.min.js'     : ['<%= concat.templates.dest %>'],
                     'vircu/static/compiled/highstock.min.js'     : ['<%= concat.highstock.dest %>'],
                 }
             }
@@ -127,8 +156,12 @@ module.exports = function (grunt) {
                 files : ['vircu/static/css/*.less', 'vircu/static/less/*.less', 'vircu/static/less/**/*.less'],
                 tasks : ['less:dev']
             },
+            react : {
+                files : ['vircu/static/js/*.jsx', 'vircu/static/js/**/*.jsx'],
+                tasks : ['react']
+            },
             js : {
-                files : ['vircu/static/js/*.js', 'vircu/static/js/**/*.js'],
+                files : ['vircu/static/js/*.js', 'vircu/static/js/**/*.js', 'vircu/static/compiled/templates/*.js', 'vircu/static/compiled/jsx/*.js'],
                 tasks : ['jshint:all', 'concat']
             }
         },
@@ -141,8 +174,9 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-less');
+    grunt.loadNpmTasks('grunt-react');
     grunt.loadNpmTasks('grunt-casperjs');
     grunt.loadNpmTasks('grunt-notify');
 
-    grunt.registerTask('default', ['jshint', 'concat', 'uglify', 'less']);
+    grunt.registerTask('default', ['jshint', 'react', 'concat', 'uglify', 'less']);
 };

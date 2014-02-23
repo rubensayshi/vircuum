@@ -2,7 +2,7 @@ import time
 import random
 
 from vircu.trader.currency import BTC, GHS
-from vircu.trader.order import APIOrder
+from vircu.trader.state import APIOrder
 from vircu.tradeapi.common import isnumber
 from vircu.threading import raw_input
 

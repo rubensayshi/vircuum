@@ -4,6 +4,10 @@ import argparse
 import sqlalchemy
 from gevent import monkey; monkey.patch_all()
 
+
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.2f')
+
 import gevent
 from socketio.server import SocketIOServer
 
@@ -79,10 +83,10 @@ for i in range(1, args.steps + 1):
 
 from vircu_app import app
 
-setup_socketio(app)
-
 server = SocketIOServer(('0.0.0.0', 5000), app, resource="socket.io")
 state  = SocketState(server)
+
+setup_socketio(app, state)
 
 # trader
 cls = Trader if not args.test else Tester

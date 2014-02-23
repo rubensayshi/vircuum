@@ -104,3 +104,21 @@ html {
         right: 5px;
     }
 }
+
+.order-enter {
+  opacity: 0.01;
+  transition: opacity 1s ease-in;
+}
+
+.order-enter.order-enter-active {
+  opacity: 1;
+}
+
+.order-leave {
+  opacity: 1;
+  transition: opacity 1s ease-in;
+}
+
+.order-leave.order-leave-active {
+  opacity: 0.01;
+}

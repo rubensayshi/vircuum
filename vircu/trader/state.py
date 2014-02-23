@@ -70,9 +70,9 @@ class CLIState(TraderState):
         return self
 
     def order_container(self, order):
-        if isinstance(order, BuyOrder):
+        if order.type == 'buy':
             return self.buy_orders
-        elif isinstance(order, SellOrder):
+        elif order.type == 'sell':
             return self.sell_orders
 
 
@@ -98,18 +98,21 @@ class SocketState(CLIState):
         return super(SocketState, self).tick(price, dt)
 
     def add_order(self, order):
-        self.broadcast_event("msg", "new order %s" % order)
+        self.broadcast_event("order", order.as_json())
         return super(SocketState, self).add_order(order)
 
     def order_done(self, order):
+        self.broadcast_event("order", order.as_json())
         self.broadcast_event("msg", "order done %s" % order)
         return super(SocketState, self).order_done(order)
 
     def order_processed(self, order):
+        self.broadcast_event("order", order.as_json())
         self.broadcast_event("msg", "order processed %s" % order)
         return super(SocketState, self).order_processed(order)
 
     def order_reset(self, order):
+        self.broadcast_event("order", order.as_json())
         self.broadcast_event("msg", "order reset %s" % order)
         return super(SocketState, self).order_reset(order)
 
@@ -136,6 +139,8 @@ class Order(object):
     STATUS_DONE      = 2
     STATUS_PROCESSED = 3
     STATUS_RESET     = 99
+
+    type = ''
 
     def __init__(self, apiorder, state):
         self.state    = state
@@ -192,6 +197,9 @@ class Order(object):
     def reset(self):
         self.is_reset = True
 
+    def as_json(self):
+        return self.apiorder.as_json()
+
     def __repr__(self):
         return str(self.apiorder)
 
@@ -200,11 +208,11 @@ class Order(object):
 
 
 class BuyOrder(Order):
-    pass
+    type = 'buy'
 
 
 class SellOrder(Order):
-    pass
+    type = 'sell'
 
 
 class APIOrder(object):
@@ -217,6 +225,14 @@ class APIOrder(object):
         self.pending = pending
         self.status = 0
 
-    def __repr__(self):
-        return str(dict(id = self.id, type = self.type, price = self.price, amount = self.amount, pending = self.pending, status = self.status))
+    def as_json(self):
+        return dict(id = self.id,
+                    time = int(self.time),
+                    type = self.type,
+                    price = str(self.price),
+                    amount = str(self.amount),
+                    pending = self.pending,
+                    status = self.status)
 
+    def __repr__(self):
+        return str(self.as_json())

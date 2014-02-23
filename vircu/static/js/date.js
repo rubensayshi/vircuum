@@ -59,7 +59,7 @@ VirCu.Date = function(_el, _options) {
         display : display,
         updateTs : function(_ts) {
             ts  = _ts;
-        mom = moment(ts);
+            mom = moment(ts);
             display();
         }
     };
