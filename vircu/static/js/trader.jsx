@@ -15,6 +15,8 @@ function Trader(container) {
 
     self.buy_orders = [];
     self.sell_orders = [];
+    self.price_log = [];
+    self.msg_log = [];
 
     self.connect();
     self.initDOM();
@@ -57,9 +59,11 @@ Trader.prototype.pushState = function() {
 
     self.traderView.setState({
         buy_orders : current_buy_orders, 
-        sell_orders : current_sell_orders
+        sell_orders : current_sell_orders,
+        price_log : self.price_log,
+        msg_log : self.msg_log
     });
-    self.traderView.forceUpdate(null);
+    //self.traderView.forceUpdate(null);
 }
 
 Trader.prototype.connect = function() {
@@ -77,8 +81,14 @@ Trader.prototype.connect = function() {
         self.socket.emit('init'); // triggers other events that will update out state
     });
 
-    self.socket.on('msg', function(msg, status) {
-        self.msg(msg, status);
+    self.socket.on('msg', function(msg, status, ts) {
+        self.msg_log.push({status : status, msg : msg, ts : ts || new Date()})
+        self.pushState();
+    });
+
+    self.socket.on('tick', function(price, ts) {
+        self.price_log.push({price : price, ts : ts});
+        self.pushState();
     });
 
     self.socket.on('order', function(order) {

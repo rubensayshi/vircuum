@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from vircu.dt import dt_to_utc_timestamp
 
 class TraderState(object):
 
@@ -90,11 +90,11 @@ class SocketState(CLIState):
         dt = dt or datetime.now()
         status = status or 'log'
 
-        self.broadcast_event("msg", msg, status, str(dt))
+        self.broadcast_event("msg", msg, status, dt_to_utc_timestamp(dt))
         return super(SocketState, self).log_message(msg, status)
 
     def tick(self, price, dt):
-        self.broadcast_event("msg", "price", str(price), str(dt))
+        self.broadcast_event("tick", str(price), dt_to_utc_timestamp(dt))
         return super(SocketState, self).tick(price, dt)
 
     def add_order(self, order):

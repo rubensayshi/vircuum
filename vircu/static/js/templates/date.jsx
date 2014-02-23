@@ -12,7 +12,7 @@ VirCu.templates.Date = React.createClass({
         if (this.props.from_now) {
             return mom.fromNow();
         } else {
-            return mom.format("LLL");
+            return mom.format(this.props.format || "LLL");
         }
 
     },
@@ -20,7 +20,9 @@ VirCu.templates.Date = React.createClass({
         this.setState({dateStr: this.getDateStr()});
     },
     componentWillMount : function() {
-        setInterval(this.update, this.props.interval || 3000);
+        if (this.props.from_now && (typeof(this.props.interval) == "undefined" || this.props.interval)) {
+            setInterval(this.update, this.props.interval || 3000);
+        }
     },
     render: function() {
         return <span>{this.state.dateStr}</span>;
