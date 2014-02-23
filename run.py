@@ -2,6 +2,9 @@
 import sys, os
 import argparse
 import sqlalchemy
+import gevent
+
+from gevent import monkey; monkey.patch_all()
 
 from vircu.trader.currency import BTC, GHS, BTCv, GHSv, GHSp, BTCp 
 from vircu.trader.plan import MasterPlan, Plan, UpTrend, Buy, Sell
@@ -84,6 +87,33 @@ for i in range(1, args.steps + 1):
 
     uptrendplan.add_child(action)
 
+
+from vircu_app import app
+from socketio import socketio_manage
+from socketio.namespace import BaseNamespace
+from socketio.mixins import BroadcastMixin
+from flask import request, Response
+from vircu.trader.trader import SocketState
+
+
+class TraderNamespace(BaseNamespace, BroadcastMixin):
+    def on_init(self):
+        self.broadcast_event('msg', 'TEST')
+
+    def recv_message(self, message):
+        print "PING!!!", message
+
+
+@app.route("/socket.io/<path:path>")
+def run_socketio(path):
+    socketio_manage(request.environ, {'/trader': TraderNamespace})
+    return Response()
+
+
+from socketio.server import SocketIOServer
+server = SocketIOServer(('0.0.0.0', 5000), app, resource="socket.io")
+state  = SocketState(server)
+
 # trader
 cls = Trader if not args.test else Tester
 trader = cls(tradeapi = tradeapi,
@@ -92,6 +122,13 @@ trader = cls(tradeapi = tradeapi,
              autostart = args.autostart,
              retries = args.retries,
              Session = Session,
+             state = state,
              **extra)
 
-trader.run()
+
+gevent.spawn(server.serve_forever)
+gevent.spawn(trader.run)
+
+while True:
+    gevent.sleep(1)
+

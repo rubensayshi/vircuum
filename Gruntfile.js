@@ -56,9 +56,11 @@ module.exports = function (grunt) {
                        'vircu/static/js/lib/jquery.lazyload.js',
                        'vircu/static/js/lib/purl.js',
                        'vircu/static/js/lib/moment.js',
+                       'vircu/static/js/lib/socket.io.js',
 
                        'vircu/static/js/init.js',
                        'vircu/static/js/date.js',
+                       'vircu/static/js/client.js',
                        ],
                 dest : 'vircu/static/compiled/desktop.js'
             },

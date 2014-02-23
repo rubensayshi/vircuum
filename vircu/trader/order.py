@@ -1,4 +1,3 @@
-from vircu.trader.models import DBBuyOrder, DBSellOrder
 
 
 class Order(object):
@@ -8,18 +7,9 @@ class Order(object):
     STATUS_PROCESSED = 3
     STATUS_RESET     = 99
 
-    def __init__(self, trader, apiorder = None, dborder = None):
-        self.trader   = trader
-        self.dborder  = dborder
+    def __init__(self, apiorder, state):
+        self.state    = state
         self.apiorder = apiorder
-
-        assert self.dborder or self.apiorder
-
-        if not self.dborder:
-            self.dborder = self.dborder_from_apiorder(self.apiorder)
-            self.updatedb()
-        if not self.apiorder:
-            raise NotImplementedError()
 
     @property
     def price(self):
@@ -40,9 +30,8 @@ class Order(object):
     @is_done.setter
     def is_done(self, is_done):
         if is_done:
-            self.dborder.status  = self.STATUS_DONE
             self.apiorder.status = self.STATUS_DONE
-            self.updatedb()
+            self.state.order_done(self)
         else:
             raise Exception()
 
@@ -53,9 +42,8 @@ class Order(object):
     @is_processed.setter
     def is_processed(self, is_processed):
         if is_processed:
-            self.dborder.status  = self.STATUS_PROCESSED
             self.apiorder.status = self.STATUS_PROCESSED
-            self.updatedb()
+            self.state.order_processed(self)
         else:
             raise Exception()
 
@@ -66,17 +54,13 @@ class Order(object):
     @is_reset.setter
     def is_reset(self, is_reset):
         if is_reset:
-            self.dborder.status  = self.STATUS_RESET
             self.apiorder.status = self.STATUS_RESET
-            self.updatedb()
+            self.state.order_reset(self)
         else:
             raise Exception()
 
     def reset(self):
         self.is_reset = True
-
-    def updatedb(self):
-        self.trader.session.add(self.dborder)
 
     def __repr__(self):
         return str(self.apiorder)
@@ -84,25 +68,13 @@ class Order(object):
     def __nonzero__(self):
         return not self.is_reset
 
-    @classmethod
-    def dborder_from_apiorder(cls, apiorder):
-        dborder = cls.DBCLASS()
-        dborder.foreign_id = apiorder.id
-        dborder.timestamp  = apiorder.time
-        dborder.price      = apiorder.price
-        dborder.amount     = apiorder.amount
-        dborder.pending    = apiorder.pending
-        dborder.status     = cls.STATUS_OPEN
-
-        return dborder
-
 
 class BuyOrder(Order):
-    DBCLASS = DBBuyOrder
+    pass
 
 
 class SellOrder(Order):
-    DBCLASS = DBSellOrder
+    pass
 
 
 class APIOrder(object):

@@ -10,7 +10,6 @@ def create_app(full = True):
 
     _setup_config(app)
     _setup_version(app)
-    _setup_db(app)
     _setup_tldextract(app)
     
     _setup_statics(app)
@@ -44,15 +43,6 @@ def _setup_version(app):
     app.config['STATIC_VERSION'] = STATIC_VERSION
 
 
-def _setup_db(app):
-    from flask_sqlalchemy import SQLAlchemy
-    from vircu.models import db
-
-    db.init_app(app)
-    db.app = app
-    app.db = db
-
-
 def _setup_tldextract(app):
     import tldextract
     app.tldextract = tldextract.TLDExtract(cache_file = app.config['TMP_DIR'] + "/.tld_set")
@@ -62,16 +52,9 @@ def _setup_menu(app):
     from vircu.view.menu import MenuManager
     from vircu.view.vircu_menus import MainMenu
 
-    try:
-        app.menu = MenuManager(app)
+    app.menu = MenuManager(app)
 
-        app.main_menu = MainMenu()
-
-    finally:
-        # dispose of the engines connection pool because we're most likely in a main thread instead of a local worker thread
-        #  and the engine shouldn't be shared between threads
-        app.db.session.close_all()
-        app.db.engine.dispose()
+    app.main_menu = MainMenu()
 
 
 def _setup_statics(app):

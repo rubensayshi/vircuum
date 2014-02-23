@@ -5,6 +5,18 @@ from vircu.trader.currency import BTC, GHS
 from vircu.trader.order import APIOrder
 from vircu.tradeapi.common import isnumber
 
+
+import sys, select
+def raw_input(prompt):
+    """non-block raw_input"""
+
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+
+    select.select([sys.stdin], [], [])
+    return sys.stdin.readline().rstrip('\n')
+
+
 class TradeAPI(object):
     def __init__(self, noncemod = 1, noncenum = 0, *args, **kwargs):
         self.price = BTC.VALUE(0.04)

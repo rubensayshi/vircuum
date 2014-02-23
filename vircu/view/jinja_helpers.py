@@ -14,10 +14,9 @@ from vircu.common import get_domain, simple_request_url, get_pretty_url, get_end
 from vircu.util.statics_cache import static_url
 from vircu.util import clean_html
 import pytz
-from vircu.view.utils import pretty_sizeof, url_for_static_page
+from vircu.view.utils import pretty_sizeof
 from werkzeug.local import LocalProxy
 from vircu.dt import dt_to_utc_timestamp, dt_as_utc
-import vircu.chart
 import vircu.constants
 import math
 import locale
@@ -26,7 +25,6 @@ def setup_jinja_helpers(app):
     # expose constants
     app.jinja_env.globals['config'] = app.config
     app.jinja_env.globals['constants'] = vircu.constants
-    app.jinja_env.globals['chart_constants'] = vircu.chart
     
     app.jinja_env.globals['uuid4'] = uuid4
     app.jinja_env.globals['nbsp'] = Markup('&nbsp')
@@ -45,7 +43,6 @@ def setup_jinja_helpers(app):
         return static_url(url_for('static', version = version, filename = filename))
     
     app.jinja_env.globals['url_for_static'] = url_for_static   
-    app.jinja_env.globals['url_for_static_page'] = url_for_static_page
     
     def strip_html_filter(v, *args, **kwargs):
         # returning Markup means jinja2 will consider it as safe 
