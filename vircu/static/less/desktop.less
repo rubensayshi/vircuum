@@ -1,5 +1,6 @@
 @import (less) "bootstrap-3.1.1/less/bootstrap.less";
-@import (less) "bootstrap-3.1.1/less/theme.less";
+@import (less) "bootstrap-slate-theme/variables.less";
+@import (less) "bootstrap-slate-theme/bootswatch.less";
 @import (less) "bootstrap-switch/build/css/bootstrap3/bootstrap-switch.css";
 @import (less) "font-awesome.css";
 @import (less) "flag-icons.less";
@@ -33,7 +34,7 @@ html {
 }
 
 #page-footer {
-    background-color: #F5F5F5;
+    background-color: @gray-dark;
     height: 60px;
 
     .footer-content {
