@@ -33,6 +33,8 @@ parser.add_argument("--test", dest="test", action="store_true", default=False, r
 parser.add_argument("-nn", "--noncenum", dest="noncenum", type=int, default=0, required=False, help="noncenum for running multiple scripts async")
 parser.add_argument("-n", "--noncemod", dest="noncemod", type=int, default=1, required=False, help="noncemod for running multiple scripts async")
 
+parser.add_argument("-p", "--port", dest="port", type=int, default=5000, required=False, help="port for frontend")
+
 args = parser.parse_args()
 
 try:
@@ -83,7 +85,7 @@ for i in range(1, args.steps + 1):
 
 from vircu_app import app
 
-server = SocketIOServer(('0.0.0.0', 5000), app, resource="socket.io")
+server = SocketIOServer(('0.0.0.0', args.port), app, resource="socket.io")
 state  = SocketState(server)
 
 setup_socketio(app, state)
