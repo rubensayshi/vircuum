@@ -26,7 +26,7 @@ VirCu.templates.Orders = React.createClass({
                     <th>Status</th>
                 </tr>
             </thead>
-            <ReactCSSTransitionGroup component={React.DOM.tbody} transitionName="order">
+            <ReactCSSTransitionGroup component={React.DOM.tbody} className="orders" transitionName="order">
                 {orderNodes}
             </ReactCSSTransitionGroup>
         </table>

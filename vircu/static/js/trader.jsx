@@ -2,10 +2,7 @@
  * @jsx React.DOM
  */
 
-WEB_SOCKET_SWF_LOCATION = "../WebSocketMain.swf";
-WEB_SOCKET_DEBUG = true;
-
-function Trader(container) {
+VirCu.Trader = function(container) {
     var self = this;
 
     self.socket = null;
@@ -20,17 +17,17 @@ function Trader(container) {
 
     self.connect();
     self.initDOM();
-}
+};
 
-Trader.prototype.log = function(msg) {
+VirCu.Trader.prototype.log = function(msg) {
     console.log(msg);
 };
 
-Trader.prototype.msg = function(msg, status) {
+VirCu.Trader.prototype.msg = function(msg, status) {
     console.log(msg, status);
 };
 
-Trader.prototype.order_container = function(type) {
+VirCu.Trader.prototype.order_container = function(type) {
     var self = this;
 
     if (type == 'buy') {
@@ -40,7 +37,7 @@ Trader.prototype.order_container = function(type) {
     } 
 };
 
-Trader.prototype.pushState = function() {
+VirCu.Trader.prototype.pushState = function() {
     var self = this;
 
     var current_buy_orders = self.buy_orders.filter(function(order) {
@@ -64,9 +61,9 @@ Trader.prototype.pushState = function() {
         msg_log : self.msg_log
     });
     //self.traderView.forceUpdate(null);
-}
+};
 
-Trader.prototype.connect = function() {
+VirCu.Trader.prototype.connect = function() {
     var self = this;
 
     // socket.io specific code
@@ -91,7 +88,8 @@ Trader.prototype.connect = function() {
         self.pushState();
     });
 
-    self.socket.on('order', function(order) {
+    self.socket.on('order', function(data) {
+        var order = new VirCu.Order(data);
         var orders = self.order_container(order.type);
 
         var idx = -1;
@@ -123,7 +121,7 @@ Trader.prototype.connect = function() {
     });
 };
 
-Trader.prototype.initDOM = function() {
+VirCu.Trader.prototype.initDOM = function() {
     var self = this;
     var Trader = VirCu.templates.Trader;
 

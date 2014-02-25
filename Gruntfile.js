@@ -38,7 +38,8 @@ module.exports = function (grunt) {
             },
             react: {
               files : {
-                'vircu/static/compiled/jsx/trader.js' : 'vircu/static/js/trader.jsx'
+                'vircu/static/compiled/jsx/trader.js' : 'vircu/static/js/trader.jsx',
+                'vircu/static/compiled/jsx/order.js' : 'vircu/static/js/order.jsx'
               }
           }
       },
@@ -88,6 +89,7 @@ module.exports = function (grunt) {
                        'vircu/static/js/init.js',
                        'vircu/static/js/date.js',
                        'vircu/static/compiled/jsx/trader.js',
+                       'vircu/static/compiled/jsx/order.js'
                        ],
                 dest : 'vircu/static/compiled/desktop.js'
             },
