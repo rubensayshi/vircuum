@@ -82,12 +82,12 @@ Trader.prototype.connect = function() {
     });
 
     self.socket.on('msg', function(msg, status, ts) {
-        self.msg_log.push({status : status, msg : msg, ts : ts || new Date()})
+        self.msg_log.unshift({status : status, msg : msg, ts : ts || new Date()})
         self.pushState();
     });
 
     self.socket.on('tick', function(price, ts) {
-        self.price_log.push({price : price, ts : ts});
+        self.price_log.unshift({price : price, ts : ts});
         self.pushState();
     });
 
