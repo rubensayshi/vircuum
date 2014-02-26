@@ -259,7 +259,11 @@ class Trader(object):
             open_orders = self.retry(lambda: self.tradeapi.open_orders())
 
         for buy_order in list(self.buy_orders):
-            if buy_order.id in [open_order.id for open_order in open_orders]:
+            open_order = filter(lambda order: order.id == buy_order.id, open_orders)
+            open_order = open_order[0] if len(open_order) > 0 else None
+            if open_order:
+                if buy_order.time == 0:
+                    buy_order.time = open_order.time
                 # not processed yet :-()
                 continue
             else:
@@ -288,7 +292,11 @@ class Trader(object):
             open_orders = self.retry(lambda: self.tradeapi.open_orders())
 
         for sell_order in list(self.sell_orders):
-            if sell_order.id in [open_order.id for open_order in open_orders]:
+            open_order = filter(lambda order: order.id == sell_order.id, open_orders)
+            open_order = open_order[0] if len(open_order) > 0 else None
+            if open_order:
+                if sell_order.time == 0:
+                    sell_order.time = open_order.time
                 # not processed yet :-()
                 continue
             else:
