@@ -147,12 +147,24 @@ class Order(object):
         self.apiorder = apiorder
 
     @property
+    def id(self):
+        return self.apiorder.id
+
+    @property
     def price(self):
         return self.apiorder.price
 
     @property
     def amount(self):
         return self.apiorder.amount
+
+    @property
+    def time(self):
+        return self.apiorder.time
+
+    @time.setter
+    def time(self, value):
+        self.apiorder.time = value
 
     @property
     def is_open(self):

@@ -110,19 +110,24 @@ class Trader(object):
 
     def check_current_orders(self):
         open_orders = self.tradeapi.open_orders()
+        open_orders_map = dict([(order.id, order) for order in open_orders])
 
-        for order in list(self.buy_orders):
-            if order.is_done or order.apiorder.id in [open_order.id for open_order in open_orders]:
-                continue
-            else:
-                order.is_done = True
+        for orders in [list(self.buy_orders), list(self.sell_orders)]:
+            for order in orders:
+                # ignore orders that are already done
+                if order.is_done:
+                    continue
 
-
-        for order in list(self.sell_orders):
-            if order.is_done or order.apiorder.id in [open_order.id for open_order in open_orders]:
-                continue
-            else:
-                order.is_done = True
+                # check if there's an open_order matching the order
+                open_order = open_orders_map.get(order.id, None)
+                if open_order:
+                    # hotfix for when time isn't returned from the place_order API
+                    if not order.time:
+                        order.time = open_order.time
+                    continue
+                else:
+                    # if there's no open_order then the order is done
+                    order.is_done = True
 
         self.state.flush()
 
