@@ -229,7 +229,7 @@ class Buy(Action):
 
     def place_buy_order(self):
         price  = self.price = self.price * (1 - self.threshold)
-        amount = self.balance[self.incurr] / price
+        amount = self.outcurr.VALUE(self.balance[self.incurr] / price)
 
         self.trader.log_action("place_buy_order for %s @ %s" % (amount, price))
 

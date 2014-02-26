@@ -7,10 +7,10 @@ VirCu.Order = function(data) {
 
     self.id      = data.id;
     self.type    = data.type;
-    self.price   = data.price;
-    self.amount  = data.amount;
+    self.price   = new VirCu.Currency(data.price);
+    self.amount  = new VirCu.Currency(data.amount);
     self.status  = data.status;
-    self.pending = data.pending;
+    self.pending = new VirCu.Currency(data.pending);
     self.time    = data.time;
 };
 

@@ -1,7 +1,7 @@
 import time
 import random
 
-from vircu.trader.currency import BTC, GHS
+from vircu.trader.currency import BTC, GHS, BTCv, GHSv
 from vircu.trader.state import APIOrder
 from vircu.tradeapi.common import isnumber
 from vircu.threading import raw_input
@@ -40,7 +40,7 @@ class TradeAPI(object):
     def place_order(self, type, amount, price):
         id = self.nonce()
         if self.debug: print "id", id
-        order = APIOrder(id = id, time = time.time(), type = type, price = price, amount = amount, pending = 0.0)
+        order = APIOrder(id = id, time = time.time(), type = type, price = price, amount = amount, pending = GHSv(0.0))
 
         if type == 'buy':
             self._balance -= price * amount

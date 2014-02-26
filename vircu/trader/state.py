@@ -198,7 +198,13 @@ class Order(object):
         self.is_reset = True
 
     def as_json(self):
-        return self.apiorder.as_json()
+        data = self.apiorder.as_dict()
+
+        data['price']   = {'value' : str(data['price']),   'symbol' : data['price'].symbol}
+        data['amount']  = {'value' : str(data['amount']),  'symbol' : data['amount'].symbol}
+        data['pending'] = {'value' : str(data['pending']), 'symbol' : data['pending'].symbol}
+
+        return data
 
     def __repr__(self):
         return str(self.apiorder)
@@ -225,14 +231,14 @@ class APIOrder(object):
         self.pending = pending
         self.status = 0
 
-    def as_json(self):
+    def as_dict(self):
         return dict(id = self.id,
-                    time = int(self.time),
+                    time = self.time,
                     type = self.type,
-                    price = str(self.price),
-                    amount = str(self.amount),
+                    price = self.price,
+                    amount = self.amount,
                     pending = self.pending,
                     status = self.status)
 
     def __repr__(self):
-        return str(self.as_json())
+        return str(self.as_dict())

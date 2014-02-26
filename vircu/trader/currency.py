@@ -26,6 +26,10 @@ class CurrencyV(object):
     def round(self, value):
         return self.CURRENCY.round(value)
 
+    @property
+    def symbol(self):
+        return self.CURRENCY.NAME
+
     def assert_same_currency(self, other):
         assert isinstance(other, self.__class__), "self[%s] other[%s]" % (self.__class__, other.__class__)
 
