@@ -4,28 +4,19 @@
 
 
 VirCu.templates.Price = React.createClass({
-    render : function() {
-        var MyDate = VirCu.templates.Date;
+    render: function() {
+        var MyDate   = VirCu.templates.Date,
+            cx       = React.addons.classSet;
+
+        var trClasses = {'price-log' : true}; trClasses = cx(trClasses);
 
         return (
-            <li className="list-group-item">
-                <MyDate timestamp={this.props.timestamp} format="YYYY-MM-DD HH:mm:ss" /> | <span>{this.props.price}</span>
-            </li>
+    <tr className={trClasses}>
+        <td><MyDate format="YYYY-MM-DD HH:mm:ss" timestamp={this.props.timestamp} /></td>
+        <td>{this.props.price}</td>
+    </tr>
         );
-    },
-});
-
-
-VirCu.templates.LogMessage = React.createClass({
-    render : function() {
-        var MyDate = VirCu.templates.Date;
-
-        return (
-            <li className="list-group-item">
-                <MyDate timestamp={this.props.timestamp} format="YYYY-MM-DD HH:mm:ss" /> | <span>{this.props.status}</span> | <span>{this.props.msg}</span>
-            </li>
-        );
-    },
+    }
 });
 
 
@@ -65,9 +56,18 @@ VirCu.templates.Trader = React.createClass({
                         <div className="panel-heading">
                             <h2 className="panel-title"><i className="fa fa-fw fa-list"></i> Message Log</h2>
                         </div>
-                        <ReactCSSTransitionGroup component={React.DOM.ul} className="list-group" transitionName="order">
-                            {logMessageNodes}
-                        </ReactCSSTransitionGroup>
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <ReactCSSTransitionGroup component={React.DOM.tbody} transitionName="order">
+                                {logMessageNodes}
+                            </ReactCSSTransitionGroup>
+                        </table>
                     </div>
                 </div>
                 <div className="col-md-4">
@@ -75,9 +75,17 @@ VirCu.templates.Trader = React.createClass({
                         <div className="panel-heading">
                             <h2 className="panel-title"><i className="fa fa-fw fa-list"></i> Price Log</h2>
                         </div>
-                        <ReactCSSTransitionGroup component={React.DOM.ul} className="list-group" transitionName="order">
-                            {priceNodes}
-                        </ReactCSSTransitionGroup>
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <ReactCSSTransitionGroup component={React.DOM.tbody} transitionName="order">
+                                {priceNodes}
+                            </ReactCSSTransitionGroup>
+                        </table>
                     </div>
                 </div>
             </div>

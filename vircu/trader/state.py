@@ -95,18 +95,18 @@ class SocketState(InMemoryState):
         return super(SocketState, self).reinit()
 
     def assigned_balance(self, assigned_balance):
-        self.broadcast_event("msg", str(assigned_balance), 'balance', dt_to_utc_timestamp(datetime.now()))
+        self.log_message("order reset %s" % str(assigned_balance), 'balance')
         return super(SocketState, self).assigned_balance(assigned_balance)
 
     def log_message(self, msg, status = None, dt = None):
         dt = dt or datetime.now()
         status = status or 'log'
 
-        self.broadcast_event("msg", msg, status, dt_to_utc_timestamp(dt))
+        self.broadcast_event("msg", msg, status, dt_to_utc_timestamp(datetime.now()))
         return super(SocketState, self).log_message(msg, status)
 
     def tick(self, price, dt):
-        self.broadcast_event("tick", str(price), dt_to_utc_timestamp(dt))
+        self.broadcast_event("tick", str(price), dt_to_utc_timestamp(datetime.now()))
         return super(SocketState, self).tick(price, dt)
 
     def add_order(self, order):
@@ -115,17 +115,17 @@ class SocketState(InMemoryState):
 
     def order_done(self, order):
         self.broadcast_event("order", order.as_json())
-        self.broadcast_event("msg", "order done %s" % order)
+        self.log_message("order done %s" % order)
         return super(SocketState, self).order_done(order)
 
     def order_processed(self, order):
         self.broadcast_event("order", order.as_json())
-        self.broadcast_event("msg", "order processed %s" % order)
+        self.log_message("order processed %s" % order)
         return super(SocketState, self).order_processed(order)
 
     def order_reset(self, order):
         self.broadcast_event("order", order.as_json())
-        self.broadcast_event("msg", "order reset %s" % order)
+        self.log_message("order reset %s" % order)
         return super(SocketState, self).order_reset(order)
 
     def flush(self):
