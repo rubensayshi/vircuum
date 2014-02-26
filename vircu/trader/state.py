@@ -106,7 +106,7 @@ class SocketState(InMemoryState):
         return super(SocketState, self).log_message(msg, status)
 
     def tick(self, price, dt):
-        self.broadcast_event("tick", str(price), dt_to_utc_timestamp(datetime.now()))
+        self.broadcast_event("tick", {'value' : str(price), 'symbol' : price.symbol}, dt_to_utc_timestamp(datetime.now()))
         return super(SocketState, self).tick(price, dt)
 
     def add_order(self, order):

@@ -23,7 +23,7 @@ VirCu.templates.Currency = React.createClass({
         var Symbol = VirCu.templates.Symbol;
 
         return (
-        <span>{this.props.currency.value} <Symbol symbol={this.props.currency.symbol} /></span>
+        <span>{this.props.currency.value}{' '}<Symbol symbol={this.props.currency.symbol} /></span>
         );
     }
 });

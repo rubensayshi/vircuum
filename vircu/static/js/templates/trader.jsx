@@ -6,6 +6,7 @@
 VirCu.templates.Price = React.createClass({
     render: function() {
         var MyDate   = VirCu.templates.Date,
+            Currency = VirCu.templates.Currency,
             cx       = React.addons.classSet;
 
         var trClasses = {'price-log' : true}; trClasses = cx(trClasses);
@@ -13,7 +14,7 @@ VirCu.templates.Price = React.createClass({
         return (
     <tr className={trClasses}>
         <td><MyDate format="YYYY-MM-DD HH:mm:ss" timestamp={this.props.timestamp} /></td>
-        <td>{this.props.price}</td>
+        <td><Currency currency={this.props.price} /></td>
     </tr>
         );
     }
