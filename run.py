@@ -101,9 +101,12 @@ trader = cls(tradeapi = tradeapi,
              **extra)
 
 
-gevent.spawn(server.serve_forever)
-gevent.spawn(trader.run)
+gserve = gevent.spawn(server.serve_forever)
+grun = None
 
 while True:
+    if server.started and not grun:
+        grun = gevent.spawn(trader.run)
+
     gevent.sleep(1)
 

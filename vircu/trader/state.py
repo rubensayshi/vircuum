@@ -3,6 +3,9 @@ from vircu.dt import dt_to_utc_timestamp
 
 class TraderState(object):
 
+    def reinit(self):
+        raise NotImplementedError()
+
     def assigned_balance(self, assigned_balance):
         raise NotImplementedError()
 
@@ -28,11 +31,15 @@ class TraderState(object):
         raise NotImplementedError()
 
 
-class CLIState(TraderState):
+class InMemoryState(TraderState):
 
     def __init__(self):
         self.buy_orders = []
         self.sell_orders = []
+        self.log_messages = []
+
+    def reinit(self):
+        return self
 
     def assigned_balance(self, assigned_balance):
         print "assigned_balance", assigned_balance
@@ -43,6 +50,7 @@ class CLIState(TraderState):
         status = status or 'log'
 
         print msg, status, dt
+        self.log_messages.append((msg, status, dt))
         return self
 
     def tick(self, price, dt):
@@ -76,14 +84,18 @@ class CLIState(TraderState):
             return self.sell_orders
 
 
-class SocketState(CLIState):
+class SocketState(InMemoryState):
 
     def __init__(self, server):
         super(SocketState, self).__init__()
         self.server = server
 
+    def reinit(self):
+        print "reinit", self.broadcast_event("reinit")
+        return super(SocketState, self).reinit()
+
     def assigned_balance(self, assigned_balance):
-        self.broadcast_event("msg", str(assigned_balance))
+        self.broadcast_event("msg", str(assigned_balance), 'balance', dt_to_utc_timestamp(datetime.now()))
         return super(SocketState, self).assigned_balance(assigned_balance)
 
     def log_message(self, msg, status = None, dt = None):

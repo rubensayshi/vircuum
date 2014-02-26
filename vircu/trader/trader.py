@@ -40,6 +40,7 @@ class Trader(object):
         if not self.autostart:
             self.confirm("run?")
 
+        self.state.reinit()
         self.state.assigned_balance(self.masterplan.assigned_balance).flush()
 
         (self.bid, self.ask) = self.get_price()

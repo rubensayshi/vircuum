@@ -21,8 +21,12 @@ VirCu.templates.Date = React.createClass({
     },
     componentWillMount : function() {
         if (this.props.from_now && (typeof(this.props.interval) == "undefined" || this.props.interval)) {
-            setInterval(this.update, this.props.interval || 3000);
+            this.interval = setInterval(this.update, this.props.interval || 3000);
         }
+    },
+    componentWillUnmount : function() {
+        clearInterval(this.interval);
+        this.interval = null;
     },
     render: function() {
         return <span>{this.state.dateStr}</span>;

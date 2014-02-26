@@ -7,16 +7,20 @@ VirCu.Trader = function(container) {
 
     self.socket = null;
     self.container = container;
-
     self.traderView = null;
+
+    self.initState();
+    self.connect();
+    self.initDOM();
+};
+
+VirCu.Trader.prototype.initState = function() {
+    var self = this;
 
     self.buy_orders = [];
     self.sell_orders = [];
     self.price_log = [];
     self.msg_log = [];
-
-    self.connect();
-    self.initDOM();
 };
 
 VirCu.Trader.prototype.log = function(msg) {
@@ -60,7 +64,6 @@ VirCu.Trader.prototype.pushState = function() {
         price_log : self.price_log,
         msg_log : self.msg_log
     });
-    //self.traderView.forceUpdate(null);
 };
 
 VirCu.Trader.prototype.connect = function() {
@@ -75,11 +78,20 @@ VirCu.Trader.prototype.connect = function() {
 
     self.socket.on('connect', function() {
         self.log('connect');
-        self.socket.emit('init'); // triggers other events that will update out state
+        self.socket.emit('request_init'); // triggers other events that will update out state
+    });
+
+    self.socket.on('disconnect', function() {
+        self.log('disconnect');
+    });
+
+    self.socket.on('reinit', function() {
+        self.log('reinit');
+        alert("Backend requested a re-init, you should refresh the page");
     });
 
     self.socket.on('msg', function(msg, status, ts) {
-        self.msg_log.unshift({status : status, msg : msg, ts : ts || new Date()})
+        self.msg_log.unshift({status : status, msg : msg, ts : ts || new Date()});
         self.pushState();
     });
 
