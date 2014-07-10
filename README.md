@@ -2,6 +2,7 @@
 I'm in progress of rewriting the whole project because the initial version was only giving commmandline output (see branch `v1.0-CLIonly`).  
 This new version will run a socketio server to show a status page that live updates in the browser.
 
+There's also a lot of code that I've copied from my previous project into this project that isn't needed anymore ..
 
 ## HELP:
 `./run.py -h`
