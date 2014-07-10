@@ -23,3 +23,5 @@ edit `config.py` and fill in the information.
 
  - bitstamp, using $50, spread across 7 steps, using 1% threshold for buying and profit (0.01)
 `./run.py -e bitstamp -t 0.01 -ue 50 -s 7 -y -yy`
+
+![example](https://raw.githubusercontent.com/rubensayshi/vircuum/master/example.png)
